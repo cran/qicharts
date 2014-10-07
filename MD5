@@ -1,0 +1,15 @@
+52a046618d2c93d453fc85d5c8d9d474 *DESCRIPTION
+ed83fcfce1826783570174809ce4ae93 *NAMESPACE
+c4a55332064ddaa68a31d034dbc4c0d0 *NEWS
+e90d718ec502bef14a23aeaa00ef81f7 *R/paretochart.R
+b3b85c1e16c2859b85f267d694f2f83a *R/qic.R
+10c26a1679d94ee5e8cb21070217b1da *R/trc.R
+247c59b21aa541ee2724c2c8a070bf54 *README.md
+c259f35ff52eed87c318fb156119ed94 *build/vignette.rds
+8416dfcfde44bf5d216c8809f1e15823 *inst/doc/runcharts.R
+23270ba5e919e2e69ae3d51e6738b1c1 *inst/doc/runcharts.Rmd
+c7e470359d8502bef8d99e6c1cd96b74 *inst/doc/runcharts.html
+1700a67cbc502a8bc8b4e8edb6ad55c3 *man/paretochart.Rd
+e3d6c58f253f11de8a0e51fa2463dc3b *man/qic.Rd
+29219b8115f17fc5d0ba7f7ab9c4ddcd *man/trc.Rd
+23270ba5e919e2e69ae3d51e6738b1c1 *vignettes/runcharts.Rmd
