@@ -35,7 +35,7 @@ If the process of interest shows only random variation, the data points will be 
 
 If the process shifts, these conditions are no longer true and patterns of non-random variation may be detected by statistical tests.
 
-Non-random variation may present itself in several ways. If the process center is shifting due to improvement or degradation we may observe _unusually_ long runs of consecutive data points on the same side of the median or that the graph crosses the median _unusually_ few times. The length of the longest run and the number of crossings in a random process are predictable within limits and depend on the total number of data points in the run chart.
+Non-random variation may present itself in several ways. If the process centre is shifting due to improvement or degradation we may observe _unusually_ long runs of consecutive data points on the same side of the median or that the graph crosses the median _unusually_ few times. The length of the longest run and the number of crossings in a random process are predictable within limits and depend on the total number of data points in the run chart.
 
 - A **shift signal** is present if any run of consecutive data points on the same side of the median is longer than the prediction limit, `round(log2(n) + 3)`^[Mark F. Schilling (2012). The Surprising Predictability of Long Runs. Math. Mag. 85, 141-149]. Data points that fall on the median do not count, they do neither break nor contribute to the run.
 
@@ -43,7 +43,7 @@ Non-random variation may present itself in several ways. If the process center i
 
 `n` is the number of useful data points, that is, data points that do not fall on the median.
 
-The shift and the crossings signals are based on a false positive signal rate around 5% and have proven usefull in practice.
+The shift and the crossings signals are based on a false positive signal rate around 5% and have proven useful in practice.
 
 ```{r fig2, fig.cap='Figure 2'}
 y[13:24] <- rpois(12, 24)  # Introduce a shift in process mean
@@ -71,7 +71,7 @@ If data have been collected before and after a change, it may be useful to calcu
 qic(y, freeze = 12)
 ```
 
-If a significant change in process perfomance has occured, it may be useful to split the graph in two.
+If a significant change in process performance has occurred, it may be useful to split the graph in two.
 
 ```{r fig4, fig.cap='Figure 4'}
 qic(y, breaks = 12)
@@ -121,7 +121,7 @@ d         <- data.frame(date, y, n, week)          # Data frame
 head(d, 10)
 ```
 
-By using the `data` argument, we may avoid the clumsy `$` notation. And by using the `week` column as the subgrouping vector, the `qic` function takes care of aggregating and plotting data by subgoups.
+By using the `data` argument, we may avoid the clumsy `$` notation. And by using the `week` column as the subgrouping vector, the `qic` function takes care of aggregating and plotting data by subgroups.
 
 ```{r fig7, fig.cap='Figure 7'}
 qic(y, n, x = week, data = d)

@@ -191,6 +191,7 @@ qic <- function(y,
 
   # Get data, sample sizes, subgroups, and notes
   if(!missing(data)){
+    class(data) <- 'data.frame'
     y <- data[,deparse(substitute(y))]
     if(deparse(substitute(n)) %in% colnames(data))
       n <- data[,deparse(substitute(n))]
@@ -885,11 +886,11 @@ plot.qic <- function(qic,
 
   # Add lines to plot
   for(p in parts) {
-    lines(p, y[p], type = type, col = col1, lwd = lwd * cex, pch = 19,
-          cex = cex)
     lines(p, cl[p], col = col, lty = lty, lwd = lwd / 3)
     lines(p, ucl[p], lty = 1, col = col3, lwd = lwd / 3)
     lines(p, lcl[p], lty = 1, col = col3, lwd = lwd / 3)
+    lines(p, y[p], type = type, col = col1, lwd = lwd * cex, pch = 19,
+          cex = cex)
   }
   # add target line
   if(!is.null(target))

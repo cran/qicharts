@@ -1,7 +1,4 @@
----
-title: "Quality improvement charts"
-output: html_document
----
+# Quality improvement charts
 
 The **qicharts** package contains functions for plotting run charts and basic Shewhart control charts for measure and count data.
 
@@ -22,7 +19,7 @@ vignette('runcharts')
 ```
 Then read the help files
 ```
-?spc
+?qic
 ?trc
 ?paretochart
 ```

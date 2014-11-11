@@ -7,9 +7,15 @@
 #' @import latticeExtra
 #' @param x Formula object to plot. The formula is of the form y ~ x |
 #'    g1 + g2 + ..., indicating that plots of y (on the y-axis) versus x
-#'    (on the x-axis) should be produced conditional on the variables g1, g2.
+#'    (on the x-axis) should be produced conditional on the variables g1, g2
 #' @param xscale Scaling of x-axes: 'same' or 'free'
 #' @param yscale Scaling of y-axes: 'same' or 'free'
+#' @param dec Number of decimals of median value
+#' @param pch Plotting character
+#' @param col1 Colour of curve
+#' @param col2 Colour of center line if non-random variation is present
+#' @param col3 Colour of center line if only random variation is present
+#' @param stripcol Colour of strip background
 #' @param xpad Number specifying the fraction by which to extend the x-axis in
 #'   order to make space for the median label.
 #' @param ... Further arguments to xyplot
@@ -18,6 +24,7 @@
 #' \code{\link{lattice}} package. Some usefull arguments from
 #' \code{\link{xyplot}} are \code{main}, \code{ylab}, \code{xlab}, and
 #' \code{layout}.
+#' @return Returns an object of class "trellis".
 #' @seealso
 #' \code{\link{xyplot}}
 #' @examples
@@ -40,22 +47,28 @@
 #' d2$y[132:144] <- d2$y[132:144] * 3
 #' trc(y ~ x | g1 + g2, data = d2, main = 'Trellis run chart')
 trc <- function(x,
-                xscale = 'same',
-                yscale = 'same',
-                xpad = 0.1,
+                xscale   = 'same',
+                yscale   = 'same',
+                dec      = 2,
+                xpad     = 0.1,
+                pch      = 19,
+                col1     = 'steelblue4',
+                col2     = 'tomato',
+                col3     = 'palegreen4',
+                stripcol = 'grey96',
                 ...) {
-  pch      <- 19
-  col1     <- 'steelblue4'
-  col2     <- 'tomato'
-  col3     <- 'palegreen4'
-  stripcol <- 'grey96'
+  #   pch      <- pch
+  #   col1     <- col1
+  #   col2     <- col2
+  #   col3     <- col3
+  #   stripcol <- stripcol
   strip    <- strip.custom(bg = stripcol)
-  scales   <- c(list(y = list(relation = yscale,
-                              alternating = 1,
-                              tck = c(1, 0)),
-                     x = list(relation = xscale,
-                              alternating = 1,
-                              tck = c(1, 0))))
+  scales   <- list(y = list(relation = yscale,
+                            alternating = 1,
+                            tck = c(1, 0)),
+                   x = list(relation = xscale,
+                            alternating = 1,
+                            tck = c(1, 0)))
   # Add room for median label
   prepanel <- function(x, y, ...) {
     list(xlim = range(min(x), max(extendrange(x, f = xpad))))
@@ -76,7 +89,7 @@ trc <- function(x,
     panel.lines(x, qic$cl, col = col, lty = lty)
     panel.text(x = max(x),
                y = qic$cl,
-               labels = signif(qic$cl, 2),
+               labels = round(qic$cl, dec),
                cex = 0.9,
                pos = 4,
                ...)
@@ -95,10 +108,9 @@ trc <- function(x,
 
   # Use outer strips with two conditioning variables
   if(length(dim(p)) == 2) {
-    useOuterStrips(p,
-                   strip = strip,
-                   strip.left = strip)
-  } else {
-    plot(p)
+    p <- useOuterStrips(p,
+                        strip = strip,
+                        strip.left = strip)
   }
+  return(p)
 }

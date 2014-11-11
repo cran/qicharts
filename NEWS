@@ -1,4 +1,17 @@
+qicharts 0.1.1
+=================
+* The trc function now retuns a lattice object.
+
+* Added arguments to control printing character and colours in trc function.
+
+* Added dec argument to control the number of decimals on the label of
+  the center line in trc function.
+
+* The qic function now plots the main curve on top of other lines in the plot.
+
+* Fixed an error caused if data frame argument holds a data frame
+  created with the group_by function from dplyr.
+
 qicharts 0.1.0
 =================
-
 * First release.
