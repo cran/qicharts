@@ -26,12 +26,10 @@
 #' @param exclude Numeric vector of data points to exclude from calculations of
 #'   center and control lines.
 #' @param negy Logical value, if TRUE, the y axis is allowed to be negative
-#'   (only relevant for i and xbar charts).
+#'   (only relevant for I and Xbar charts).
 #' @param dots.only Logical value, if TRUE, data points are not connected by
 #'   lines and runs analysis is not performed. Useful for comparison and funnel
 #'   plots.
-#' @param decimals Integer indicating the number of decimals shown for center
-#'   and limits on the plot.
 #' @param multiply Integer indicating a number to multiply y axis by, e.g. 100
 #'   for percents rather than proportions.
 #' @param x.format Date format of x axis labels.
@@ -40,6 +38,9 @@
 #' @param main Character string specifying the title of the plot.
 #' @param xlab Character string specifying the x axis label.
 #' @param ylab Character string specifying the y axis label.
+#' @param decimals Integer indicating the number of decimals shown for center
+#'   and limits on the plot. Default behaviour is smart rounding to at least two
+#'   significant digits.
 #' @param pre.text Character string labelling pre-freeze period
 #' @param post.text Character string labelling post-freeze period
 #' @param runvals Logical value, if TRUE, prints statistics from runs analysis
@@ -47,7 +48,15 @@
 #' @param linevals Logical value, if TRUE, prints values for center and control
 #'   lines on plot.
 #' @param plot.chart Logical value, if TRUE, prints plot.
-#' @param prnt Logical value, if TRUE prints return value
+#' @param prnt Logical value, if TRUE, prints return value
+#' @param primed Logical value, if TRUE, control limits incorporate
+#'   between-subgroup variation as proposed by Laney (2002). This is recommended
+#'   for data involving very large sample sizes \code{n}. Only relevant for P
+#'   and U charts.
+#' @param standardised Logical value, if TRUE, creates a standardised control
+#'   chart, where points are plotted in standard deviation units along with a
+#'   center line at zero and control limits at 3 and -3. Only relevant for P, U
+#'   and Xbar charts.
 #' @param ... Further arguments to plot function.
 #'
 #' @details If \code{chart} is not specified, \code{qic} plots a \strong{run
@@ -76,18 +85,24 @@
 #'   If more than one \code{note} is present within any subgroup, the first
 #'   \code{note} (alphabetically) is chosen.
 #'
+#'   If both \code{primed} and \code{standardised} are \code{TRUE}, points are
+#'   plotted in units corresponding to Laney's modified "standard deviation",
+#'   which incorporates the variation between subgroups.
+#'
 #' @return A list of values and parameters of the qic plot.
 #'
 #' @references Runs analysis: \itemize{ \item Mark F. Schilling (2012). The
-#'   Surprising Predictability of Long Runs. Math. Mag. 85, 141-149 \item
+#'   Surprising Predictability of Long Runs. Math. Mag. 85, 141-149. \item
 #'   Zhenmin Chen (2010). A note on the runs test. Model Assisted Statistics and
 #'   Applications 5, 73-77. } Calculation of control limits: \itemize{ \item
 #'   Douglas C. Montgomery (2009). Introduction to Statistical Process Control,
-#'   Sixth Edition, John Wiley & Sons \item James C. Benneyan (2001).
+#'   Sixth Edition, John Wiley & Sons. \item James C. Benneyan (2001).
 #'   Number-Between g-Type Statistical Quality Control Charts for Monitoring
-#'   Adverse Events. Health Care Management Science 4, 305-318 \item Lloyd P.
+#'   Adverse Events. Health Care Management Science 4, 305-318. \item Lloyd P.
 #'   Provost, Sandra K. Murray (2011). The Health Care Data Guide: Learning from
-#'   Data for Improvement. San Fransisco: John Wiley & Sons Inc. }
+#'   Data for Improvement. San Fransisco: John Wiley & Sons Inc. \item David B.
+#'   Laney (2002). Improved control charts for attributes. Quality Engineering,
+#'   14(4), 531-537.}
 #'
 #' @examples
 #' set.seed(1)
@@ -157,28 +172,30 @@ qic <- function(y,
                     'c',
                     'u',
                     'g'),
-                notes      = NULL,
-                cl         = NULL,
-                ylim       = NULL,
-                target     = NULL,
-                freeze     = NULL,
-                breaks     = NULL,
-                exclude    = NULL,
-                negy       = TRUE,
-                dots.only  = FALSE,
-                decimals   = 1,
-                multiply   = 1,
-                x.format   = '%Y-%m-%d',
-                cex        = 0.9,
+                notes        = NULL,
+                cl           = NULL,
+                ylim         = NULL,
+                target       = NULL,
+                freeze       = NULL,
+                breaks       = NULL,
+                exclude      = NULL,
+                negy         = TRUE,
+                dots.only    = FALSE,
+                multiply     = 1,
+                x.format     = '%Y-%m-%d',
+                cex          = 0.8,
                 main,
-                xlab       = 'Subgroup',
-                ylab       = 'Indicator',
-                pre.text   = 'Before data',
-                post.text  = 'After data',
-                runvals    = TRUE,
-                linevals   = TRUE,
-                plot.chart = TRUE,
-                prnt       = FALSE,
+                xlab         = 'Subgroup',
+                ylab         = 'Indicator',
+                decimals     = NULL,
+                pre.text     = 'Before data',
+                post.text    = 'After data',
+                runvals      = FALSE,
+                linevals     = TRUE,
+                plot.chart   = TRUE,
+                prnt         = FALSE,
+                primed       = FALSE,
+                standardised = FALSE,
                 ...) {
 
   # Select chart type
@@ -186,8 +203,16 @@ qic <- function(y,
   fn <- paste0('qic.', type)
 
   # Prepare chart title
-  if(missing(main))
+  no_title <- missing(main)
+
+  if(no_title)
     main <- paste(toupper(type), "Chart of", deparse(substitute(y)))
+
+  if(no_title & primed == T)
+    main <- paste(paste0(toupper(type), "'"), "Chart of", deparse(substitute(y)))
+
+  if(no_title & standardised == T)
+    main <- paste("Standardised", main)
 
   # Get data, sample sizes, subgroups, and notes
   if(!missing(data)){
@@ -292,7 +317,9 @@ qic <- function(y,
     y <- do.call(fn, list(d = d[p,],
                           cl = cl,
                           freeze = freeze,
-                          exclude = ex))
+                          exclude = ex,
+                          primed = primed,
+                          standardised = standardised))
     qic$y   <- c(qic$y, y$y)
     qic$cl  <- c(qic$cl, y$cl)
     qic$lcl <- c(qic$lcl, y$lcl)
@@ -301,13 +328,15 @@ qic <- function(y,
 
   # Prevent negative y axis if negy argument is FALSE
   if(!negy & min(qic$y, na.rm = TRUE) >= 0)
-    qic$lcl[qic$lcl < 0] <- 0
+    qic$lcl[qic$lcl < 0] <- NA
 
   # Multiply y axis by multiply argument
-  qic$y   <- as.vector(qic$y) * multiply
-  qic$cl  <- as.vector(qic$cl) * multiply
-  qic$lcl <- as.vector(qic$lcl) * multiply
-  qic$ucl <- as.vector(qic$ucl) * multiply
+  if(!standardised) {
+    qic$y   <- as.vector(qic$y) * multiply
+    qic$cl  <- as.vector(qic$cl) * multiply
+    qic$lcl <- as.vector(qic$lcl) * multiply
+    qic$ucl <- as.vector(qic$ucl) * multiply
+  }
 
   # Create x axis labels
   labels <- row.names(d)
@@ -369,15 +398,15 @@ qic <- function(y,
   # Plot qic chart
   if(plot.chart)
     plot.qic(qic = qic,
-            dots.only = dots.only,
-            decimals  = decimals,
-            runvals   = runvals,
-            linevals  = linevals,
-            ylim      = ylim,
-            pre.text  = pre.text,
-            post.text = post.text,
-            cex = cex,
-            ...)
+             dots.only = dots.only,
+             decimals  = decimals,
+             runvals   = runvals,
+             linevals  = linevals,
+             ylim      = ylim,
+             pre.text  = pre.text,
+             post.text = post.text,
+             cex = cex,
+             ...)
 
   # Return qic object
   if(prnt) {
@@ -521,7 +550,7 @@ qic.t <- function(d, freeze, cl, exclude, ...) {
   cl = qic$cl^3.6
   ucl = qic$ucl^3.6
   lcl = qic$lcl^3.6
-  lcl[lcl < 0 | is.nan(lcl)] <- 0
+  lcl[lcl < 0 | is.nan(lcl)] <- NA
 
   return(list(y = y,
               cl = cl,
@@ -529,13 +558,12 @@ qic.t <- function(d, freeze, cl, exclude, ...) {
               ucl = ucl))
 }
 
-qic.xbar <- function(d, freeze, cl, exclude, ...){
+qic.xbar <- function(d, freeze, cl, exclude, standardised, ...){
 
   # Get values to plot
   y <- d$y.mean
   n <- d$y.n
   s <- d$y.sd
-  excl <- which(is.na(s))
 
   # Get number of subgroups
   y.length <- length(y)
@@ -552,14 +580,21 @@ qic.xbar <- function(d, freeze, cl, exclude, ...){
     cl <- sum(n[base] * y[base], na.rm = T) / sum(n[base], na.rm = T)
   cl <- rep(cl, y.length)
 
-  # Calculate standard deviation and control limits, Montgomery 6.28
+  # Calculate standard deviation and control limits, Montgomery 6.31
   stdev <- sqrt(sum(s[base]^2 * (n[base] - 1), na.rm = T) /
                   sum(n[base] - 1, na.rm = T))
 
-  #   stdev[excl] <- NA
   A3 <- a3(n)
   ucl <- cl + A3 * stdev
   lcl <- cl - A3 * stdev
+
+  # Calculations for standardised control chart
+  if(standardised) {
+    y <- (y - cl) / (stdev / sqrt(n))
+    cl <- rep(0, y.length)
+    ucl <- rep(3, y.length)
+    lcl <- rep(-3, y.length)
+  }
 
   # Return object to calling function
   return(list(y = y,
@@ -601,7 +636,7 @@ qic.s <- function(d, freeze = NULL, cl, exclude, ...){
               ucl = ucl))
 }
 
-qic.p <- function(d, freeze, cl, exclude, ...){
+qic.p <- function(d, freeze, cl, exclude, primed, standardised, ...){
 
   # Calcutate indicator to plot
   n <- d$y.sum
@@ -623,14 +658,30 @@ qic.p <- function(d, freeze, cl, exclude, ...){
     cl <- sum(n[base], na.rm = T) / sum(N[base], na.rm = T)
   cl <- rep(cl, y.length)
 
-  # Calculate standard deviation, , Montgomery 7.8
+  # Calculate standard deviation, Montgomery 7.8
   stdev <- sqrt(cl * (1 - cl) / N)
+
+  # Calculate standard deviation for Laney's p-primed chart, incorporating
+  # between-subgroup variation.
+  if(primed) {
+    z_i <- (y[base] - cl[base]) / stdev[base]
+    sigma_z <- mean(abs(diff(z_i))) / 1.128
+    stdev <- stdev * sigma_z
+  }
 
   # Calculate limits
   ucl <- cl + 3 * stdev
-  ucl[ucl > 1] <- 1
+  ucl[ucl > 1] <- NA
   lcl <- cl - 3 * stdev
-  lcl[lcl < 0] <- 0
+  lcl[lcl < 0] <- NA
+
+  # Calculations for standardised control chart, Montgomery 7.14
+  if(standardised) {
+    y <- (y - cl) / stdev # "z_i" in Montgomery
+    cl <- rep(0, y.length)
+    ucl <- rep(3, y.length)
+    lcl <- rep(-3, y.length)
+  }
 
   # Return object to calling function
   return(list(y = y,
@@ -665,7 +716,7 @@ qic.c <- function(d, freeze, cl, exclude, ...){
   # Calculate limits
   ucl <- cl + 3 * stdev
   lcl <- cl - 3 * stdev
-  lcl[lcl < 0] <- 0
+  lcl[lcl < 0] <- NA
 
   # Return object to calling function
   return(list(y = y,
@@ -674,7 +725,7 @@ qic.c <- function(d, freeze, cl, exclude, ...){
               ucl = ucl))
 }
 
-qic.u <- function(d, freeze, cl, exclude, ...){
+qic.u <- function(d, freeze, cl, exclude, primed, standardised, ...){
 
   # Calcutate indicator to plot
   n <- d$y.sum
@@ -701,10 +752,26 @@ qic.u <- function(d, freeze, cl, exclude, ...){
   # Calculate standard deviation, Montgomery 7.19
   stdev <- sqrt(cl / N)
 
+  # Calculate standard deviation for Laney's p-primed chart, incorporating
+  # between-subgroup variation.
+  if(primed) {
+    z_i <- (y[base] - cl[base]) / stdev[base]
+    sigma_z <- mean(abs(diff(z_i))) / 1.128
+    stdev <- stdev * sigma_z
+  }
+
   # Calculate limits
   ucl <- cl + 3 * stdev
   lcl <- cl - 3 * stdev
-  lcl[lcl < 0] <- 0
+  lcl[lcl < 0] <- NA
+
+  # Calculations for standardised control chart, Montgomery 7.20
+  if(standardised) {
+    y <- (y - cl) / stdev  # "u_i" in Montgomery
+    cl <- rep(0, y.length)
+    ucl <- rep(3, y.length)
+    lcl <- rep(-3, y.length)
+  }
 
   # Return object to calling function
   return(list(y = y,
@@ -741,7 +808,7 @@ qic.g <- function(d, freeze, cl, exclude, ...){
   # Calculate limits
   ucl <- cl + 3 * stdev
   lcl <- cl - 3 * stdev
-  lcl[lcl < 0] <- 0
+  lcl[lcl < 0] <- NA
 
   #   Set center line to theoretical median, Provost (2011) p. 228
   cl <- 0.693 * cl
@@ -810,20 +877,20 @@ c4 <- function(n) {
 }
 
 plot.qic <- function(qic,
-                    dots.only,
-                    decimals,
-                    runvals,
-                    linevals,
-                    ylim,
-                    pre.text,
-                    post.text,
-                    col1 = 'steelblue4',
-                    col2 = 'tomato',
-                    col3 = 'palegreen4',
-                    mar = c(4.5, 4.5, 3.5, 0.5),
-                    cex,
-                    lwd = cex * 3,
-                    ...) {
+                     dots.only,
+                     decimals,
+                     runvals,
+                     linevals,
+                     ylim,
+                     pre.text,
+                     post.text,
+                     cex,
+                     ...) {
+  col1            <- rgb(093, 165, 218, maxColorValue = 255)
+  col2            <- rgb(223, 092, 036, maxColorValue = 255)
+  col3            <- rgb(140, 140, 140, maxColorValue = 255)
+  #   col3            <- 'grey50'
+  lwd             <- cex
   n.obs           <- qic$n.obs
   y               <- qic$y
   x               <- 1:n.obs
@@ -840,7 +907,8 @@ plot.qic <- function(qic,
   main            <- qic$main
   xlab            <- qic$xlab
   ylab            <- qic$ylab
-  type            <- ifelse(dots.only, 'p', 'b')
+  type            <- ifelse(dots.only, 'p', 'o')
+  pch             <- ifelse(dots.only, 19, 20)
   notes           <- qic$notes
   n.usefull       <- qic$n.usefull
   longest.run     <- qic$longest.run
@@ -851,13 +919,17 @@ plot.qic <- function(qic,
   ylim            <- range(ylim, y, ucl, lcl, cl, target, na.rm = T)
 
   # Setup plot margins
-  if(linevals)
-    mar           <- mar + c(0, 0, 0, +1.8)
+  mar             <- par('mar') + c(-0.5, 0, 0, 0)
+  #     if(!linevals)
+  #       mar           <- mar + c(0, 0, 0, -2)
+  #     if(main == '')
+  #       mar           <- mar + c(0, 0, -1.8, 0)
+  #     if(xlab == '')
+  #       mar           <- mar + c(-1, 0, 0, 0)
+  #     if(ylab == '')
+  #       mar           <- mar + c(0, -1, 0, 0)
   if(runvals & !dots.only)
     mar           <- mar + c(1.5, 0, 0, 0)
-  if(main == '')
-    mar           <- mar + c(0, 0, -1.8, 0)
-
   op              <- par(mar = mar)
 
   # setup empty plot area
@@ -865,16 +937,40 @@ plot.qic <- function(qic,
        y    = y,
        type = 'n',
        xaxt = 'n',
+       yaxt = 'n',
        bty  = 'n',
        ylim = ylim,
-       xlab = xlab,
-       ylab = ylab,
-       cex.axis = cex,
-       cex.lab = cex,
+       xlab = '',
+       ylab = '',
        ...)
+
   # add x axis and title to plot
-  axis(1, at = 1:n.obs, labels = labels, cex.axis = cex, ...)
-  title(main = main, adj = 0, line = 2.3, cex.main = cex)
+  axis(1,
+       at = 1:n.obs,
+       labels = labels,
+       tcl = -0.2,
+       lwd = 0,
+       lwd.ticks = lwd,
+       cex.axis = cex,
+       col = col3,
+       ...)
+  axis(2,
+       tcl = -0.2,
+       lwd = 0,
+       lwd.ticks = lwd,
+       cex.axis = cex,
+       col = col3,
+       las = 2,
+       ...)
+  box(bty = 'l',
+      lwd = lwd,
+      col = col3)
+  title(main = main,
+        adj = 0,
+        line = 2.7,
+        cex.main = cex * 1.25,
+        font.main = 1)
+  title(xlab = xlab, ylab = ylab, cex.lab = cex)
 
   # Color and dash center line if non random variation is present
   lty <- 1
@@ -886,22 +982,23 @@ plot.qic <- function(qic,
 
   # Add lines to plot
   for(p in parts) {
-    lines(p, cl[p], col = col, lty = lty, lwd = lwd / 3)
-    lines(p, ucl[p], lty = 1, col = col3, lwd = lwd / 3)
-    lines(p, lcl[p], lty = 1, col = col3, lwd = lwd / 3)
-    lines(p, y[p], type = type, col = col1, lwd = lwd * cex, pch = 19,
-          cex = cex)
+    lines(p, cl[p], col = col, lty = lty, lwd = lwd * 1.5)
+    lines(p, ucl[p], lty = 1, col = col3, lwd = lwd)
+    lines(p, lcl[p], lty = 1, col = col3, lwd = lwd)
+    lines(p, y[p], type = type, col = col1, lwd = lwd * 4,
+          pch = pch, cex = cex)
   }
   # add target line
   if(!is.null(target))
     lines(1:n.obs, rep(target, n.obs), lty = 3, col = col3,
-          lwd = lwd / 3)
+          lwd = lwd)
 
   # annotate before and after data if freeze argument is given
   if(!is.null(freeze)) {
     abline(v = freeze + 0.5,
+           col = col3,
            lty = 3,
-           lwd = lwd / 3)
+           lwd = lwd)
     mtext(pre.text,
           at = freeze / 2,
           cex = cex * 0.9,
@@ -913,31 +1010,30 @@ plot.qic <- function(qic,
   }
 
   # color data points outside sigma limits
-  points(signals, y[signals], col = col2, pch = 19, cex = cex * 1.4)
+  points(signals, y[signals], col = col2, pch = pch, cex = cex * 1.5)
 
   # mark excluded data points
-  points(exclude, y[exclude], col = 'white', pch = 19, cex = cex * 1.4)
-  points(exclude, y[exclude], col = 'black', pch = 4, cex = cex)
+  points(exclude, y[exclude], bg = 0, col = col3, pch = 21, cex = cex * 1.2)
 
   # add values for center and limits to the plot
   if(linevals) {
-    mtext(round(cl[n.obs], decimals),
+    mtext(sround(cl[n.obs], decimals),
           side = 4,
           at = cl[n.obs],
           las = 1,
           cex = cex * 0.9)
-    mtext(round(ucl[n.obs], decimals),
+    mtext(sround(ucl[n.obs], decimals),
           side = 4,
           at = ucl[n.obs],
           las = 1,
           cex = cex * 0.9)
-    mtext(round(lcl[n.obs], decimals),
+    mtext(sround(lcl[n.obs], decimals),
           side = 4,
           at = lcl[n.obs],
           las = 1,
           cex = cex * 0.9)
     if(!is.null(target))
-      mtext(round(target, decimals),
+      mtext(sround(target, decimals),
             side = 4,
             at = target,
             las = 1,
@@ -958,14 +1054,14 @@ plot.qic <- function(qic,
           side = 1,
           line = 4.5,
           adj = 0.5,
-          col = 1 + (longest.run > longest.run.max))
+          col = ifelse(longest.run > longest.run.max, col2, 1))
     mtext(paste0('Crossings (min) = ', n.crossings,
                  ' (', n.crossings.min, ')'),
           cex = cex * 0.9,
           side = 1,
           adj = 1,
           line = 4.5,
-          col = 1 + (n.crossings < n.crossings.min))
+          col = ifelse(n.crossings < n.crossings.min, col2, 1))
   }
 
   # Add notes to plot
@@ -977,12 +1073,21 @@ plot.qic <- function(qic,
           side = 3,
           at = x,
           adj = 0.5,
-          cex = cex * 0.8)
+          cex = cex * 0.9)
     segments(x.ann,
              max(ylim, na.rm = TRUE) * 1.05,
              y1 = y.ann,
-             lty = 2,
-             lwd = lwd * 0.3)
+             lty = 3,
+             lwd = lwd)
   }
   par(op)
+}
+
+# Smart rounding for median labels, to at least 2 significant digits
+sround <- function(x, dec) {
+  if(is.null(dec)) {
+    n <- nchar(as.character(floor(x)))
+    return(signif(x, max(2, n)))
+  }
+  return(round(x, dec))
 }
