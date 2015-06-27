@@ -7,11 +7,11 @@
 qic(y, n, x, data, chart = c("run", "i", "mr", "xbar", "s", "t", "p", "c",
   "u", "g"), notes = NULL, cl = NULL, ylim = NULL, target = NULL,
   freeze = NULL, breaks = NULL, exclude = NULL, negy = TRUE,
-  dots.only = FALSE, multiply = 1, x.format = "\%Y-\%m-\%d", cex = 0.8,
-  main, xlab = "Subgroup", ylab = "Indicator", decimals = NULL,
-  pre.text = "Before data", post.text = "After data", runvals = FALSE,
-  linevals = TRUE, plot.chart = TRUE, prnt = FALSE, primed = FALSE,
-  standardised = FALSE, ...)
+  dots.only = FALSE, multiply = 1, x.format = "\%Y-\%m-\%d", nint = 5,
+  cex = 0.8, main, xlab = "Subgroup", ylab = "Indicator",
+  decimals = NULL, pre.text = "Before data", post.text = "After data",
+  runvals = FALSE, linevals = TRUE, plot.chart = TRUE, prnt = FALSE,
+  primed = FALSE, standardised = FALSE, ...)
 }
 \arguments{
 \item{y}{Numeric vector of counts or measures to plot. Mandatory.}
@@ -33,7 +33,8 @@ proportions chart. \item "c": counts chart. \item "u": rates chart. \item
 \item{notes}{Character vector of notes to be added to individual. data
 points.}
 
-\item{cl}{Value specifying the center line (if known).}
+\item{cl}{Value specifying the center line (if known). Should be of length
+one or same as number of subgroups (for variable center line).}
 
 \item{ylim}{Range of y axis limits.}
 
@@ -59,6 +60,9 @@ plots.}
 for percents rather than proportions.}
 
 \item{x.format}{Date format of x axis labels.}
+
+\item{nint}{Number indicating (approximately) the desired number of
+tick marks on the x axis.}
 
 \item{cex}{Number indicating the amount by which text and symbols should be
 magnified.}
@@ -89,8 +93,8 @@ lines on plot.}
 
 \item{primed}{Logical value, if TRUE, control limits incorporate
 between-subgroup variation as proposed by Laney (2002). This is recommended
-for data involving very large sample sizes \code{n}. Only relevant for P
-and U charts.}
+for data involving very large sample sizes. Only relevant for P and U
+charts.}
 
 \item{standardised}{Logical value, if TRUE, creates a standardised control
 chart, where points are plotted in standard deviation units along with a
@@ -190,17 +194,23 @@ qic(y, n, x = week, data = d, chart = 'p',
     exclude = 30)
 }
 \references{
-Runs analysis: \itemize{ \item Mark F. Schilling (2012). The
-  Surprising Predictability of Long Runs. Math. Mag. 85, 141-149. \item
-  Zhenmin Chen (2010). A note on the runs test. Model Assisted Statistics and
-  Applications 5, 73-77. } Calculation of control limits: \itemize{ \item
-  Douglas C. Montgomery (2009). Introduction to Statistical Process Control,
-  Sixth Edition, John Wiley & Sons. \item James C. Benneyan (2001).
-  Number-Between g-Type Statistical Quality Control Charts for Monitoring
-  Adverse Events. Health Care Management Science 4, 305-318. \item Lloyd P.
-  Provost, Sandra K. Murray (2011). The Health Care Data Guide: Learning from
-  Data for Improvement. San Fransisco: John Wiley & Sons Inc. \item David B.
-  Laney (2002). Improved control charts for attributes. Quality Engineering,
-  14(4), 531-537.}
+Runs analysis: \itemize{ \item Jacob Anhoej, Anne Vingaard Olesen
+  (2014). Run Charts Revisited: A Simulation Study of Run Chart Rules for
+  Detection of Non-Random Variation in Health Care Processes. PLoS ONE 9(11):
+  e113825. doi: 10.1371/journal.pone.0113825 . \item Jacob Anhoej (2015).
+  Diagnostic Value of Run Chart Analysis: Using Likelihood Ratios to Compare
+  Run Chart Rules on Simulated Data Series. PLoS ONE 10(3): e0121349. doi:
+  10.1371/journal.pone.0121349 \item Mark F. Schilling (2012). The Surprising
+  Predictability of Long Runs. Math. Mag. 85, 141-149. \item Zhenmin Chen
+  (2010). A note on the runs test. Model Assisted Statistics and Applications
+  5, 73-77. } Calculation of control limits: \itemize{ \item   Douglas C.
+  Montgomery (2009). Introduction to Statistical Process Control, Sixth
+  Edition, John Wiley & Sons. \item James C. Benneyan (2001). Number-Between
+  g-Type Statistical Quality Control Charts for Monitoring Adverse Events.
+  Health Care Management Science 4, 305-318. \item Lloyd P. Provost, Sandra
+  K. Murray (2011). The Health Care Data Guide: Learning from Data for
+  Improvement. San Fransisco: John Wiley & Sons Inc. \item David B. Laney
+  (2002). Improved control charts for attributes. Quality Engineering, 14(4),
+  531-537.}
 }
 
