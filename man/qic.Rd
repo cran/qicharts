@@ -7,11 +7,11 @@
 qic(y, n, x, data, chart = c("run", "i", "mr", "xbar", "s", "t", "p", "c",
   "u", "g"), notes = NULL, cl = NULL, ylim = NULL, target = NULL,
   freeze = NULL, breaks = NULL, exclude = NULL, negy = TRUE,
-  dots.only = FALSE, multiply = 1, x.format = "\%Y-\%m-\%d", nint = 5,
-  cex = 0.8, main, xlab = "Subgroup", ylab = "Indicator",
-  decimals = NULL, pre.text = "Before data", post.text = "After data",
-  runvals = FALSE, linevals = TRUE, plot.chart = TRUE, prnt = FALSE,
-  primed = FALSE, standardised = FALSE, ...)
+  dots.only = FALSE, multiply = 1, primed = FALSE, standardised = FALSE,
+  x.format = "\%Y-\%m-\%d", nint = 5, cex = 0.8, main,
+  xlab = "Subgroup", ylab = "Indicator", sub = NULL, decimals = NULL,
+  pre.text = "Before data", post.text = "After data", runvals = FALSE,
+  linevals = TRUE, plot.chart = TRUE, prnt, print.out = FALSE, ...)
 }
 \arguments{
 \item{y}{Numeric vector of counts or measures to plot. Mandatory.}
@@ -33,8 +33,8 @@ proportions chart. \item "c": counts chart. \item "u": rates chart. \item
 \item{notes}{Character vector of notes to be added to individual. data
 points.}
 
-\item{cl}{Value specifying the center line (if known). Should be of length
-one or same as number of subgroups (for variable center line).}
+\item{cl}{Value specifying the center line (if known). Must be of length one
+or same as number of subgroups (for variable center line).}
 
 \item{ylim}{Range of y axis limits.}
 
@@ -44,7 +44,8 @@ one or same as number of subgroups (for variable center line).}
 calculations of center and limits (ignored if \code{breaks} argument is
 given).}
 
-\item{breaks}{Numeric vector of break points.}
+\item{breaks}{Numeric vector of break points. Useful for splitting graph in
+two or more sections with separate center line and control limits.}
 
 \item{exclude}{Numeric vector of data points to exclude from calculations of
 center and control lines.}
@@ -52,17 +53,27 @@ center and control lines.}
 \item{negy}{Logical value, if TRUE, the y axis is allowed to be negative
 (only relevant for I and Xbar charts).}
 
-\item{dots.only}{Logical value, if TRUE, data points are not connected by
+\item{dots.only}{Logical value. If TRUE, data points are not connected by
 lines and runs analysis is not performed. Useful for comparison and funnel
 plots.}
 
 \item{multiply}{Integer indicating a number to multiply y axis by, e.g. 100
 for percents rather than proportions.}
 
-\item{x.format}{Date format of x axis labels.}
+\item{primed}{Logical value, if TRUE, control limits incorporate
+between-subgroup variation as proposed by Laney (2002). This is recommended
+for data involving very large sample sizes. Only relevant for P and U
+charts.}
 
-\item{nint}{Number indicating (approximately) the desired number of
-tick marks on the x axis.}
+\item{standardised}{Logical value, if TRUE, creates a standardised control
+chart, where points are plotted in standard deviation units along with a
+center line at zero and control limits at 3 and -3. Only relevant for P, U
+and Xbar charts.}
+
+\item{x.format}{Date format of x axis labels. See ?strftime for date formats.}
+
+\item{nint}{Number indicating (approximately) the desired number of tick
+marks on the x axis.}
 
 \item{cex}{Number indicating the amount by which text and symbols should be
 magnified.}
@@ -72,6 +83,9 @@ magnified.}
 \item{xlab}{Character string specifying the x axis label.}
 
 \item{ylab}{Character string specifying the y axis label.}
+
+\item{sub}{Character string specifying a subtitle to be printed in the lower
+left corner of the plot.}
 
 \item{decimals}{Integer indicating the number of decimals shown for center
 and limits on the plot. Default behaviour is smart rounding to at least two
@@ -89,28 +103,22 @@ lines on plot.}
 
 \item{plot.chart}{Logical value, if TRUE, prints plot.}
 
-\item{prnt}{Logical value, if TRUE, prints return value}
+\item{prnt}{Logical value, if TRUE, prints return value. Deprecated, use
+print.out instead.}
 
-\item{primed}{Logical value, if TRUE, control limits incorporate
-between-subgroup variation as proposed by Laney (2002). This is recommended
-for data involving very large sample sizes. Only relevant for P and U
-charts.}
-
-\item{standardised}{Logical value, if TRUE, creates a standardised control
-chart, where points are plotted in standard deviation units along with a
-center line at zero and control limits at 3 and -3. Only relevant for P, U
-and Xbar charts.}
+\item{print.out}{Logical value, if TRUE, prints return value}
 
 \item{...}{Further arguments to plot function.}
 }
 \value{
-A list of values and parameters of the qic plot.
+A list of of class qic containing values and parameters of the qic
+  plot.
 }
 \description{
 Run and control charts for quality improvement and control
 }
 \details{
-If \code{chart} is not specified, \code{qic} plots a \strong{run
+If \code{chart} is not specified, \code{qic()} plots a \strong{run
   chart}. Non-random variation will be marked by a dashed, red center line
   (the median) if either the longest run of data points above or below the
   median is longer than predicted or if the graph crosses the median fewer
@@ -209,7 +217,7 @@ Runs analysis: \itemize{ \item Jacob Anhoej, Anne Vingaard Olesen
   g-Type Statistical Quality Control Charts for Monitoring Adverse Events.
   Health Care Management Science 4, 305-318. \item Lloyd P. Provost, Sandra
   K. Murray (2011). The Health Care Data Guide: Learning from Data for
-  Improvement. San Fransisco: John Wiley & Sons Inc. \item David B. Laney
+  Improvement. San Francisco: John Wiley & Sons Inc. \item David B. Laney
   (2002). Improved control charts for attributes. Quality Engineering, 14(4),
   531-537.}
 }

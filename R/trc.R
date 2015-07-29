@@ -86,14 +86,16 @@ trc <- function(x,
 
   # Scale axes
   prepanel <- function(x, y, ...) {
-    qic <- qic(y, chart = chart, plot.chart = FALSE, ...)
+    # qic <- qic(y, chart = chart, plot.chart = FALSE, ...)
+    qic <- qic(y, chart = chart, plot = FALSE, ...)
     list(xlim = range(min(x), max(extendrange(x, f = xpad))),
          ylim = range(qic$y, qic$lcl, qic$ucl, target, na.rm = T))
   }
 
   # Setup plot
   panel <- function(x, y, ...) {
-    qic <- qic(y, chart = chart, plot.chart = FALSE, ...)
+    # qic <- qic(y, chart = chart, plot.chart = FALSE, ...)
+    qic <- qic(y, chart = chart, plot = FALSE, ...)
     signal <- qic$runs.test
 
     if(signal) {

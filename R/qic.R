@@ -3,6 +3,9 @@
 #' Run and control charts for quality improvement and control
 #'
 #' @export
+#' @import graphics
+#' @import grDevices
+#' @import stats
 #' @param y Numeric vector of counts or measures to plot. Mandatory.
 #' @param n Numeric vector of sample sizes. Mandatory for P and U charts.
 #' @param x Subgrouping vector used for aggregating data and making x-labels.
@@ -16,31 +19,34 @@
 #'   "g": cases between events chart. }
 #' @param notes Character vector of notes to be added to individual. data
 #'   points.
-#' @param cl Value specifying the center line (if known). Should be of length
-#'   one or same as number of subgroups (for variable center line).
+#' @param cl Value specifying the center line (if known). Must be of length one
+#'   or same as number of subgroups (for variable center line).
 #' @param ylim Range of y axis limits.
 #' @param target Value specifying a target line to plot.
 #' @param freeze Number identifying the last data point to include in
 #'   calculations of center and limits (ignored if \code{breaks} argument is
 #'   given).
-#' @param breaks Numeric vector of break points.
+#' @param breaks Numeric vector of break points. Useful for splitting graph in
+#'   two or more sections with separate center line and control limits.
 #' @param exclude Numeric vector of data points to exclude from calculations of
 #'   center and control lines.
 #' @param negy Logical value, if TRUE, the y axis is allowed to be negative
 #'   (only relevant for I and Xbar charts).
-#' @param dots.only Logical value, if TRUE, data points are not connected by
+#' @param dots.only Logical value. If TRUE, data points are not connected by
 #'   lines and runs analysis is not performed. Useful for comparison and funnel
 #'   plots.
 #' @param multiply Integer indicating a number to multiply y axis by, e.g. 100
 #'   for percents rather than proportions.
-#' @param x.format Date format of x axis labels.
-#' @param nint Number indicating (approximately) the desired number of
-#'   tick marks on the x axis.
+#' @param x.format Date format of x axis labels. See ?strftime for date formats.
+#' @param nint Number indicating (approximately) the desired number of tick
+#'   marks on the x axis.
 #' @param cex Number indicating the amount by which text and symbols should be
 #'   magnified.
 #' @param main Character string specifying the title of the plot.
 #' @param xlab Character string specifying the x axis label.
 #' @param ylab Character string specifying the y axis label.
+#' @param sub Character string specifying a subtitle to be printed in the lower
+#'   left corner of the plot.
 #' @param decimals Integer indicating the number of decimals shown for center
 #'   and limits on the plot. Default behaviour is smart rounding to at least two
 #'   significant digits.
@@ -51,7 +57,9 @@
 #' @param linevals Logical value, if TRUE, prints values for center and control
 #'   lines on plot.
 #' @param plot.chart Logical value, if TRUE, prints plot.
-#' @param prnt Logical value, if TRUE, prints return value
+#' @param prnt Logical value, if TRUE, prints return value. Deprecated, use
+#'   print.out instead.
+#' @param print.out Logical value, if TRUE, prints return value
 #' @param primed Logical value, if TRUE, control limits incorporate
 #'   between-subgroup variation as proposed by Laney (2002). This is recommended
 #'   for data involving very large sample sizes. Only relevant for P and U
@@ -62,7 +70,7 @@
 #'   and Xbar charts.
 #' @param ... Further arguments to plot function.
 #'
-#' @details If \code{chart} is not specified, \code{qic} plots a \strong{run
+#' @details If \code{chart} is not specified, \code{qic()} plots a \strong{run
 #'   chart}. Non-random variation will be marked by a dashed, red center line
 #'   (the median) if either the longest run of data points above or below the
 #'   median is longer than predicted or if the graph crosses the median fewer
@@ -92,7 +100,8 @@
 #'   plotted in units corresponding to Laney's modified "standard deviation",
 #'   which incorporates the variation between subgroups.
 #'
-#' @return A list of values and parameters of the qic plot.
+#' @return A list of of class qic containing values and parameters of the qic
+#'   plot.
 #'
 #' @references Runs analysis: \itemize{ \item Jacob Anhoej, Anne Vingaard Olesen
 #'   (2014). Run Charts Revisited: A Simulation Study of Run Chart Rules for
@@ -109,7 +118,7 @@
 #'   g-Type Statistical Quality Control Charts for Monitoring Adverse Events.
 #'   Health Care Management Science 4, 305-318. \item Lloyd P. Provost, Sandra
 #'   K. Murray (2011). The Health Care Data Guide: Learning from Data for
-#'   Improvement. San Fransisco: John Wiley & Sons Inc. \item David B. Laney
+#'   Improvement. San Francisco: John Wiley & Sons Inc. \item David B. Laney
 #'   (2002). Improved control charts for attributes. Quality Engineering, 14(4),
 #'   531-537.}
 #'
@@ -170,17 +179,16 @@ qic <- function(y,
                 n,
                 x,
                 data,
-                chart =
-                  c('run',
-                    'i',
-                    'mr',
-                    'xbar',
-                    's',
-                    't',
-                    'p',
-                    'c',
-                    'u',
-                    'g'),
+                chart        = c('run',
+                                 'i',
+                                 'mr',
+                                 'xbar',
+                                 's',
+                                 't',
+                                 'p',
+                                 'c',
+                                 'u',
+                                 'g'),
                 notes        = NULL,
                 cl           = NULL,
                 ylim         = NULL,
@@ -191,22 +199,29 @@ qic <- function(y,
                 negy         = TRUE,
                 dots.only    = FALSE,
                 multiply     = 1,
+                primed       = FALSE,
+                standardised = FALSE,
                 x.format     = '%Y-%m-%d',
                 nint         = 5,
                 cex          = 0.8,
                 main,
                 xlab         = 'Subgroup',
                 ylab         = 'Indicator',
+                sub          = NULL,
                 decimals     = NULL,
                 pre.text     = 'Before data',
                 post.text    = 'After data',
                 runvals      = FALSE,
                 linevals     = TRUE,
                 plot.chart   = TRUE,
-                prnt         = FALSE,
-                primed       = FALSE,
-                standardised = FALSE,
+                prnt,
+                print.out    = FALSE,
                 ...) {
+
+if(!missing(prnt)) {
+  warning('\"prnt\" argument will be deprecated. Use \"print.out\" instead.')
+  print.out = prnt
+}
 
   # Select chart type
   type <- match.arg(chart)
@@ -218,10 +233,10 @@ qic <- function(y,
   if(no_title)
     main <- paste(toupper(type), "Chart of", deparse(substitute(y)))
 
-  if(no_title & primed == T)
+  if(no_title & primed == TRUE)
     main <- paste(paste0(toupper(type), "'"), "Chart of", deparse(substitute(y)))
 
-  if(no_title & standardised == T)
+  if(no_title & standardised == TRUE)
     main <- paste("Standardised", main)
 
   # Get data, sample sizes, subgroups, and notes
@@ -278,10 +293,10 @@ qic <- function(y,
   }
 
   # Create data frame of values to analyse
-  d <- data.frame(y.sum  = tapply(y, x, sum, na.rm = T),
-                  y.mean = tapply(y, x, mean, na.rm = T),
-                  y.sd   = tapply(y, x, sd, na.rm = T),
-                  y.n    = tapply(n, x, sum, na.rm = T))
+  d <- data.frame(y.sum  = tapply(y, x, sum, na.rm = TRUE),
+                  y.mean = tapply(y, x, mean, na.rm = TRUE),
+                  y.sd   = tapply(y, x, sd, na.rm = TRUE),
+                  y.n    = tapply(n, x, sum, na.rm = TRUE))
 
   # Check that subgroups are unique for T and G charts
   if(any(type == c('t', 'g')) & max(d$y.n, na.rm = TRUE) > 1)
@@ -306,13 +321,13 @@ qic <- function(y,
 
   # Fix notes
   if(missing(notes)) {
-    notes <- rep(NA, n.obs)
+    notes                  <- rep(NA, n.obs)
   } else {
-    notes <- as.character(notes)
-    notes[notes == ''] <- NA
-    notes <- c(notes, rep(NA, length(y) - length(notes)))
+    notes                  <- as.character(notes)
+    notes[notes == '']     <- NA
+    notes                  <- c(notes, rep(NA, length(y) - length(notes)))
     suppressWarnings(notes <- tapply(notes, x, min, na.rm = TRUE))
-    dimnames(notes) <- NULL
+    dimnames(notes)        <- NULL
   }
 
   # Create indices of chart parts (if breaks argument is given)
@@ -370,7 +385,8 @@ qic <- function(y,
   labels <- row.names(d)
 
   if(inherits(x, c('Date','POSIXct', 'POSIXt'))) {
-    labels <- as.Date(labels)
+    # labels <- as.Date(labels)
+    labels <- as.POSIXct(labels)
     labels <- format(labels, format = x.format)
   }
 
@@ -382,7 +398,7 @@ qic <- function(y,
   }
 
   runs               <- runs[runs != 0 & !is.na(runs)]
-  n.useful          <- length(runs)
+  n.useful           <- length(runs)
 
   if(n.useful) {
     run.lengths      <- rle(runs)$lengths
@@ -404,41 +420,54 @@ qic <- function(y,
   signals            <- which(qic$y > qic$ucl | qic$y < qic$lcl)
 
   # Complete qic object
+  qic$target          <- target
   qic$n               <- as.vector(d$y.n)
   qic$labels          <- labels
   qic$notes           <- notes
   qic$parts           <- parts
-  qic$main            <- main
-  qic$xlab            <- xlab
-  qic$ylab            <- ylab
   qic$freeze          <- freeze
   qic$exclude         <- exclude
   qic$n.obs           <- n.obs
-  qic$target          <- target
-  qic$n.useful       <- n.useful
+  qic$n.useful        <- n.useful
   qic$longest.run     <- longest.run
   qic$longest.run.max <- longest.run.max
   qic$n.crossings     <- n.crossings
   qic$n.crossings.min <- n.crossings.min
   qic$runs.test       <- runs.test
   qic$signals         <- signals
+  qic$dots.only       <- dots.only
+  qic$decimals        <- decimals
+  qic$runvals         <- runvals
+  qic$linevals        <- linevals
+  qic$main            <- main
+  qic$xlab            <- xlab
+  qic$ylab            <- ylab
+  qic$sub             <- sub
+  qic$pre.text        <- pre.text
+  qic$post.text       <- post.text
+  qic$ylim            <- ylim
+  qic$nint            <- nint
+  qic$cex             <- cex
+
+  class(qic) <- 'qic'
 
   # Plot qic chart
   if(plot.chart)
-    plot.qic(qic = qic,
-             dots.only = dots.only,
-             decimals  = decimals,
-             runvals   = runvals,
-             linevals  = linevals,
-             ylim      = ylim,
-             pre.text  = pre.text,
-             post.text = post.text,
-             nint = nint,
-             cex = cex,
-             ...)
+    plot(qic, ...)
+  #       plot.qic(qic = qic,
+  #                dots.only = dots.only,
+  #                decimals  = decimals,
+  #                runvals   = runvals,
+  #                linevals  = linevals,
+  #                ylim      = ylim,
+  #                pre.text  = pre.text,
+  #                post.text = post.text,
+  #                nint = nint,
+  #                cex = cex,
+  # ...)
 
   # Return qic object
-  if(prnt) {
+  if(print.out) {
     return(qic)
   } else {
     invisible(qic)
@@ -462,7 +491,7 @@ qic.run <- function(d, freeze, cl, exclude, ...){
 
   # Calculate center line
   if(is.null(cl))
-    cl <- median(y[base], na.rm = T)
+    cl <- median(y[base], na.rm = TRUE)
   if(length(cl) == 1)
     cl <- rep(cl, y.length)
 
@@ -488,27 +517,27 @@ qic.i <- function(d, freeze, cl, exclude, ...) {
   # Define subgroups to be used in calculations
   if(is.null(freeze))
     freeze <- y.length
-  base <- (1:freeze)
+  base <- 1:freeze
   if(!is.null(exclude))
     base <- base[-exclude]
 
   # Calculate center line
   if(is.null(cl))
-    cl <- mean(y[base], na.rm = T)
+    cl <- mean(y[base], na.rm = TRUE)
   cl <- rep(cl, y.length)
 
   # Calculate moving ranges
   mr <- abs(diff(y[base]))
-  amr <- mean(mr, na.rm = T)
+  amr <- mean(mr, na.rm = TRUE)
 
   # Calculate upper limit for moving ranges
   ulmr <- 3.267 * amr
 
   # Remove moving ranges bigger than ulmr and recalculate amr, Provost
   mr <- mr[mr < ulmr]
-  amr <- mean(mr, na.rm = T)
+  amr <- mean(mr, na.rm = TRUE)
 
-  # Calculate standard deviation, Montgomery, p. 6.33
+  # Calculate standard deviation, Montgomery, 6.33
   stdev <- amr/1.128
   stdev <- rep(stdev, y.length)
 
@@ -541,7 +570,7 @@ qic.mr <- function(d, freeze, cl, exclude, ...) {
 
   # Calculate center line
   if(is.null(cl))
-    cl <- mean(y[base], na.rm = T)
+    cl <- mean(y[base], na.rm = TRUE)
   cl <- rep(cl, y.length)
 
   # Calculate upper limit for moving ranges
@@ -559,11 +588,11 @@ qic.t <- function(d, freeze, cl, exclude, ...) {
   # Get values to plot
   y <- d$y.sum
 
-  if(min(y, na.rm = T) < 0) {
+  if(min(y, na.rm = TRUE) < 0) {
     stop('Time between events cannot contain negative values')
   }
 
-  if(min(y, na.rm = T) == 0) {
+  if(min(y, na.rm = TRUE) == 0) {
     y[y == 0] <- 0.1
     warning('Time between events should not contain zero values. Zeros replaced by 0.1')
   }
@@ -572,7 +601,7 @@ qic.t <- function(d, freeze, cl, exclude, ...) {
   y <- y^(1 / 3.6)
   d$y.sum <- y
 
-  # Calculate center and limits for I chart
+  # Calculate center and limits for transformed values
   qic <- qic.i(d, freeze, cl, exclude, ...)
 
   # Back transform center line and limits
@@ -607,12 +636,12 @@ qic.xbar <- function(d, freeze, cl, exclude, standardised, ...){
 
   # Calculate center line, Montgomery 6.30
   if(is.null(cl))
-    cl <- sum(n[base] * y[base], na.rm = T) / sum(n[base], na.rm = T)
+    cl <- sum(n[base] * y[base], na.rm = TRUE) / sum(n[base], na.rm = TRUE)
   cl <- rep(cl, y.length)
 
   # Calculate standard deviation and control limits, Montgomery 6.31
-  stdev <- sqrt(sum(s[base]^2 * (n[base] - 1), na.rm = T) /
-                  sum(n[base] - 1, na.rm = T))
+  stdev <- sqrt(sum(s[base]^2 * (n[base] - 1), na.rm = TRUE) /
+                  sum(n[base] - 1, na.rm = TRUE))
 
   A3 <- a3(n)
   ucl <- cl + A3 * stdev
@@ -651,8 +680,8 @@ qic.s <- function(d, freeze = NULL, cl, exclude, ...){
     base <- base[-exclude]
 
   # Calculate center line, Montgomery 6.31
-  sbar <- sqrt(sum(s[base]^2 * (n[base] - 1), na.rm = T) /
-                 (sum(n[base], na.rm = T) - y.length))
+  sbar <- sqrt(sum(s[base]^2 * (n[base] - 1), na.rm = TRUE) /
+                 (sum(n[base], na.rm = TRUE) - y.length))
   cl <- rep(sbar, y.length)
   B3 <- b3(n)
   B4 <- b4(n)
@@ -685,7 +714,7 @@ qic.p <- function(d, freeze, cl, exclude, primed, standardised, ...){
 
   # Calculate center line, Montgomery 7.7
   if(is.null(cl))
-    cl <- sum(n[base], na.rm = T) / sum(N[base], na.rm = T)
+    cl <- sum(n[base], na.rm = TRUE) / sum(N[base], na.rm = TRUE)
   cl <- rep(cl, y.length)
 
   # Calculate standard deviation, Montgomery 7.8
@@ -737,7 +766,7 @@ qic.c <- function(d, freeze, cl, exclude, ...){
 
   # Calculate center line
   if(is.null(cl))
-    cl <- mean(y[base], na.rm = T)
+    cl <- mean(y[base], na.rm = TRUE)
   cl <- rep(cl, y.length)
 
   # Calculate standard deviation, Montgomery 7.17
@@ -776,7 +805,7 @@ qic.u <- function(d, freeze, cl, exclude, primed, standardised, ...){
 
   # Calculate center line
   if(is.null(cl))
-    cl <- sum(n[base], na.rm = T) / sum(N[base], na.rm = T)
+    cl <- sum(n[base], na.rm = TRUE) / sum(N[base], na.rm = TRUE)
   cl <- rep(cl, y.length)
 
   # Calculate standard deviation, Montgomery 7.19
@@ -827,7 +856,7 @@ qic.g <- function(d, freeze, cl, exclude, ...){
 
   # Calculate center line
   if(is.null(cl))
-    cl <- mean(y[base], na.rm = T)
+    cl <- mean(y[base], na.rm = TRUE)
   cl <- rep(cl, y.length)
 
   # Calculate standard deviation:
@@ -906,62 +935,80 @@ c4 <- function(n) {
   return(x)
 }
 
-plot.qic <- function(qic,
-                     dots.only,
-                     decimals,
-                     runvals,
-                     linevals,
-                     ylim,
-                     pre.text,
-                     post.text,
-                     nint,
-                     cex,
-                     ...) {
+#' Plot qic object
+#'
+#' @export
+#' @param x List object returned from the qic() function.
+#' @param y Ignored. Included for compatibility with generic plot function.
+#' @param ... Further arguments to plot function.
+#'
+#' @return Creates a qic plot.
+#'
+#' @examples
+#' y <- rnorm(24)
+#' p <- qic(y, plot.chart = FALSE)
+#' plot(p)
+plot.qic <- function(x, y = NULL, ...) {
   col1            <- rgb(093, 165, 218, maxColorValue = 255)
   col2            <- rgb(223, 092, 036, maxColorValue = 255)
   col3            <- rgb(140, 140, 140, maxColorValue = 255)
-  n.obs           <- qic$n.obs
-  y               <- qic$y
+  n.obs           <- x$n.obs
+  y               <- x$y
+  cl              <- x$cl
+  lcl             <- x$lcl
+  ucl             <- x$ucl
+  target          <- x$target
+  signals         <- x$signals
+  runs.test       <- x$runs.test
+  freeze          <- x$freeze
+  parts           <- x$parts
+  exclude         <- x$exclude
+  labels          <- x$labels
+  main            <- x$main
+  xlab            <- x$xlab
+  ylab            <- x$ylab
+  sub             <- x$sub
+  notes           <- x$notes
+  n.useful        <- x$n.useful
+  longest.run     <- x$longest.run
+  longest.run.max <- x$longest.run.max
+  n.crossings     <- x$n.crossings
+  n.crossings.min <- x$n.crossings.min
+  dots.only       <- x$dots.only
+  decimals        <- x$decimals
+  runvals         <- x$runvals
+  linevals        <- x$linevals
+  ylim            <- x$ylim
+  pre.text        <- x$pre.text
+  post.text       <- x$post.text
+  nint            <- x$nint
+  cex             <- x$cex
   x               <- 1:n.obs
-  cl              <- qic$cl
-  lcl             <- qic$lcl
-  ucl             <- qic$ucl
-  target          <- qic$target
-  signals         <- qic$signals
-  runs.test       <- qic$runs.test
-  freeze          <- qic$freeze
-  parts           <- qic$parts
-  exclude         <- qic$exclude
-  labels          <- qic$labels
-  main            <- qic$main
-  xlab            <- qic$xlab
-  ylab            <- qic$ylab
+  ylim            <- range(ylim, y, ucl, lcl, cl, target, na.rm = TRUE)
+  lwd             <- cex
+  cex             <- par('cex') * cex
+  cex2            <- cex * 0.9
   type            <- ifelse(dots.only, 'p', 'o')
   pch             <- ifelse(dots.only, 19, 20)
-  notes           <- qic$notes
-  n.useful        <- qic$n.useful
-  longest.run     <- qic$longest.run
-  longest.run.max <- qic$longest.run.max
-  n.crossings     <- qic$n.crossings
-  n.crossings.min <- qic$n.crossings.min
-  cex             <- par('cex') * cex  # Text size adjustment
-  cex2            <- cex * 0.9
-  lwd             <- cex
-  ylim            <- range(ylim, y, ucl, lcl, cl, target, na.rm = T)
+
 
   # Setup plot margins
-  mar             <- par('mar') + c(-0.5, 0.25, 0, 0.25)
+  mar <- par('mar')
+  mar <- mar + c(-0.5, 0.25, 0, 0.25)
 
   if(runvals & !dots.only)
-    mar           <- mar + c(1.5, 0, 0, 0)
+    mar <- mar + c(1.5, 0, 0, 0)
 
-  op              <- par(mar = mar, cex = cex, lwd = lwd)
+  if(!is.null(sub))
+    mar <- mar + c(1, 0, 0, 0)
+
+  op <- par(mar = mar, cex = cex, lwd = lwd)
 
   # setup empty plot area
   plot(x    = x,
        y    = y,
        type = 'n',
-       axes = F,
+       axes = FALSE,
        ylim = ylim,
        xlab = '',
        ylab = '',
@@ -999,6 +1046,12 @@ plot.qic <- function(qic,
         font.main = 1)
   title(xlab = xlab, ylab = ylab)
 
+  if(!is.null(sub))
+    title(sub = sub,
+          adj = 0,
+          cex.sub = cex,
+          line = ifelse(runvals & !dots.only, 5.8, 4.3))
+
   # Color and dash center line if non random variation is present
   lty <- 1
   col <- col3
@@ -1009,9 +1062,9 @@ plot.qic <- function(qic,
 
   # add lines to plot
   for(p in parts) {
-    lines(p, cl[p], col = col, lty = lty, lwd = lwd * 1.5)
-    lines(p, ucl[p], lty = 1, col = col3)#, lwd = lwd)
-    lines(p, lcl[p], lty = 1, col = col3)#, lwd = lwd)
+    lines(p, cl[p], lty = lty, col = col, lwd = lwd * 1.5)
+    lines(p, ucl[p], lty = 1, col = col3)
+    lines(p, lcl[p], lty = 1, col = col3)
     lines(p, y[p], type = type, col = col1, lwd = lwd * 4, pch = pch)
   }
   # add target line
