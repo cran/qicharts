@@ -21,6 +21,11 @@
 #'   points.
 #' @param cl Value specifying the center line (if known). Must be of length one
 #'   or same as number of subgroups (for variable center line).
+#' @param agg.fun String specifying the aggregate function if there is more than
+#'   one value per subgroup. Possible values are  'mean' and 'sum'. Only
+#'   relevant if you want to aggregate count data with run charts or I charts.
+#'   If \code{agg.fun} = 'sum', the \code{n} argument (if provided) will be
+#'   ignored.
 #' @param ylim Range of y axis limits.
 #' @param target Value specifying a target line to plot.
 #' @param freeze Number identifying the last data point to include in
@@ -57,10 +62,8 @@
 #' @param linevals Logical value, if TRUE, prints values for center and control
 #'   lines on plot.
 #' @param plot.chart Logical value, if TRUE, prints plot.
-#' @param prnt Logical value, if TRUE, prints return value. Deprecated, use
-#'   print.out instead.
 #' @param print.out Logical value, if TRUE, prints return value
-#' @param primed Logical value, if TRUE, control limits incorporate
+#' @param prime Logical value, if TRUE, control limits incorporate
 #'   between-subgroup variation as proposed by Laney (2002). This is recommended
 #'   for data involving very large sample sizes. Only relevant for P and U
 #'   charts.
@@ -96,7 +99,7 @@
 #'   If more than one \code{note} is present within any subgroup, the first
 #'   \code{note} (alphabetically) is chosen.
 #'
-#'   If both \code{primed} and \code{standardised} are \code{TRUE}, points are
+#'   If both \code{prime} and \code{standardised} are \code{TRUE}, points are
 #'   plotted in units corresponding to Laney's modified "standard deviation",
 #'   which incorporates the variation between subgroups.
 #'
@@ -191,6 +194,7 @@ qic <- function(y,
                                  'g'),
                 notes        = NULL,
                 cl           = NULL,
+                agg.fun      = c('mean', 'sum'),
                 ylim         = NULL,
                 target       = NULL,
                 freeze       = NULL,
@@ -199,7 +203,7 @@ qic <- function(y,
                 negy         = TRUE,
                 dots.only    = FALSE,
                 multiply     = 1,
-                primed       = FALSE,
+                prime       = FALSE,
                 standardised = FALSE,
                 x.format     = '%Y-%m-%d',
                 nint         = 5,
@@ -214,18 +218,19 @@ qic <- function(y,
                 runvals      = FALSE,
                 linevals     = TRUE,
                 plot.chart   = TRUE,
-                prnt,
                 print.out    = FALSE,
                 ...) {
-
-if(!missing(prnt)) {
-  warning('\"prnt\" argument will be deprecated. Use \"print.out\" instead.')
-  print.out = prnt
-}
 
   # Select chart type
   type <- match.arg(chart)
   fn <- paste0('qic.', type)
+
+  # Select aggregate function
+  agg.fun <- match.arg(agg.fun)
+
+  if(agg.fun != 'mean' & !missing(n)) {
+    warning('\"n\" argument is irrelevant and will be ignored when \"agg.fun\" argument is provided.')
+  }
 
   # Prepare chart title
   no_title <- missing(main)
@@ -233,7 +238,7 @@ if(!missing(prnt)) {
   if(no_title)
     main <- paste(toupper(type), "Chart of", deparse(substitute(y)))
 
-  if(no_title & primed == TRUE)
+  if(no_title & prime == TRUE)
     main <- paste(paste0(toupper(type), "'"), "Chart of", deparse(substitute(y)))
 
   if(no_title & standardised == TRUE)
@@ -293,10 +298,11 @@ if(!missing(prnt)) {
   }
 
   # Create data frame of values to analyse
-  d <- data.frame(y.sum  = tapply(y, x, sum, na.rm = TRUE),
-                  y.mean = tapply(y, x, mean, na.rm = TRUE),
-                  y.sd   = tapply(y, x, sd, na.rm = TRUE),
-                  y.n    = tapply(n, x, sum, na.rm = TRUE))
+  d <- data.frame(y.sum    = tapply(y, x, sum, na.rm = TRUE),
+                  y.mean   = tapply(y, x, mean, na.rm = TRUE),
+                  y.median = tapply(y, x, median, na.rm = TRUE),
+                  y.sd     = tapply(y, x, sd, na.rm = TRUE),
+                  y.n      = tapply(n, x, sum, na.rm = TRUE))
 
   # Check that subgroups are unique for T and G charts
   if(any(type == c('t', 'g')) & max(d$y.n, na.rm = TRUE) > 1)
@@ -355,17 +361,24 @@ if(!missing(prnt)) {
       ex <- NULL
     }
     # Build qic object
-    y <- do.call(fn, list(d = d[p,],
-                          cl = cl,
-                          freeze = freeze,
-                          exclude = ex,
-                          primed = primed,
+    y <- do.call(fn, list(d            = d[p,],
+                          cl           = cl,
+                          agg.fun      = agg.fun,
+                          freeze       = freeze,
+                          exclude      = ex,
+                          prime        = prime,
                           standardised = standardised))
     qic$y   <- c(qic$y, y$y)
     qic$cl  <- c(qic$cl, y$cl)
     qic$lcl <- c(qic$lcl, y$lcl)
     qic$ucl <- c(qic$ucl, y$ucl)
   }
+
+#   if(max(table(qic$y) > length(qic$y) / 2)){
+#     qic$cl <- NA
+#     qic$ucl <- NA
+#     qic$lcl <- NA
+#   }
 
   # Prevent negative y axis if negy argument is FALSE
   if(!negy & min(qic$y, na.rm = TRUE) >= 0)
@@ -420,6 +433,7 @@ if(!missing(prnt)) {
   signals            <- which(qic$y > qic$ucl | qic$y < qic$lcl)
 
   # Complete qic object
+  qic$agg.fun         <- agg.fun
   qic$target          <- target
   qic$n               <- as.vector(d$y.n)
   qic$labels          <- labels
@@ -454,17 +468,6 @@ if(!missing(prnt)) {
   # Plot qic chart
   if(plot.chart)
     plot(qic, ...)
-  #       plot.qic(qic = qic,
-  #                dots.only = dots.only,
-  #                decimals  = decimals,
-  #                runvals   = runvals,
-  #                linevals  = linevals,
-  #                ylim      = ylim,
-  #                pre.text  = pre.text,
-  #                post.text = post.text,
-  #                nint = nint,
-  #                cex = cex,
-  # ...)
 
   # Return qic object
   if(print.out) {
@@ -474,10 +477,13 @@ if(!missing(prnt)) {
   }
 }
 
-qic.run <- function(d, freeze, cl, exclude, ...){
+qic.run <- function(d, freeze, cl, agg.fun, exclude, ...){
   # Calcutate indicator to plot
 
-  y <- d$y.sum / d$y.n
+  switch(agg.fun,
+         mean   = y <- d$y.sum / d$y.n,
+         sum    = y <- d$y.sum)
+
 
   # Get number of subgroups
   y.length <- length(y)
@@ -506,10 +512,13 @@ qic.run <- function(d, freeze, cl, exclude, ...){
               ucl = ucl))
 }
 
-qic.i <- function(d, freeze, cl, exclude, ...) {
+qic.i <- function(d, freeze, cl, agg.fun, exclude, ...) {
 
   # Get indicator to plot
-  y <- d$y.sum / d$y.n
+  # y <- d$y.sum / d$y.n
+  switch(agg.fun,
+         mean   = y <- d$y.sum / d$y.n,
+         sum    = y <- d$y.sum)
 
   # Get number of subgroups
   y.length <- length(y)
@@ -586,7 +595,7 @@ qic.mr <- function(d, freeze, cl, exclude, ...) {
 qic.t <- function(d, freeze, cl, exclude, ...) {
 
   # Get values to plot
-  y <- d$y.sum
+  y <- d$y.mean
 
   if(min(y, na.rm = TRUE) < 0) {
     stop('Time between events cannot contain negative values')
@@ -599,7 +608,7 @@ qic.t <- function(d, freeze, cl, exclude, ...) {
 
   # Transform measures, Montgomery 7.28
   y <- y^(1 / 3.6)
-  d$y.sum <- y
+  d$y.mean <- y
 
   # Calculate center and limits for transformed values
   qic <- qic.i(d, freeze, cl, exclude, ...)
@@ -695,7 +704,7 @@ qic.s <- function(d, freeze = NULL, cl, exclude, ...){
               ucl = ucl))
 }
 
-qic.p <- function(d, freeze, cl, exclude, primed, standardised, ...){
+qic.p <- function(d, freeze, cl, exclude, prime, standardised, ...){
 
   # Calcutate indicator to plot
   n <- d$y.sum
@@ -720,11 +729,11 @@ qic.p <- function(d, freeze, cl, exclude, primed, standardised, ...){
   # Calculate standard deviation, Montgomery 7.8
   stdev <- sqrt(cl * (1 - cl) / N)
 
-  # Calculate standard deviation for Laney's p-primed chart, incorporating
+  # Calculate standard deviation for Laney's p-prime chart, incorporating
   # between-subgroup variation.
-  if(primed) {
+  if(prime) {
     z_i <- (y[base] - cl[base]) / stdev[base]
-    sigma_z <- mean(abs(diff(z_i))) / 1.128
+    sigma_z <- mean(abs(diff(z_i)), na.rm = TRUE) / 1.128
     stdev <- stdev * sigma_z
   }
 
@@ -784,7 +793,7 @@ qic.c <- function(d, freeze, cl, exclude, ...){
               ucl = ucl))
 }
 
-qic.u <- function(d, freeze, cl, exclude, primed, standardised, ...){
+qic.u <- function(d, freeze, cl, exclude, prime, standardised, ...){
 
   # Calcutate indicator to plot
   n <- d$y.sum
@@ -811,11 +820,11 @@ qic.u <- function(d, freeze, cl, exclude, primed, standardised, ...){
   # Calculate standard deviation, Montgomery 7.19
   stdev <- sqrt(cl / N)
 
-  # Calculate standard deviation for Laney's p-primed chart, incorporating
+  # Calculate standard deviation for Laney's p-prime chart, incorporating
   # between-subgroup variation.
-  if(primed) {
+  if(prime) {
     z_i <- (y[base] - cl[base]) / stdev[base]
-    sigma_z <- mean(abs(diff(z_i))) / 1.128
+    sigma_z <- mean(abs(diff(z_i)), na.rm = TRUE) / 1.128
     stdev <- stdev * sigma_z
   }
 
@@ -994,7 +1003,7 @@ plot.qic <- function(x, y = NULL, ...) {
 
   # Setup plot margins
   mar <- par('mar')
-  mar <- mar + c(-0.5, 0.25, 0, 0.25)
+  mar <- mar + c(-0.5, 0.5, 0, 0.25)
 
   if(runvals & !dots.only)
     mar <- mar + c(1.5, 0, 0, 0)
@@ -1044,7 +1053,8 @@ plot.qic <- function(x, y = NULL, ...) {
         line = 2.7,
         # cex.main = cex * 1.25,
         font.main = 1)
-  title(xlab = xlab, ylab = ylab)
+  title(xlab = xlab, line = 2.8)
+  title(ylab = ylab, line = 3.5)
 
   if(!is.null(sub))
     title(sub = sub,
