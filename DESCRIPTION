@@ -1,6 +1,6 @@
 Package: qicharts
-Version: 0.3.2
-Date: 2015-09-03
+Version: 0.4.1
+Date: 2015-10-16
 Title: Quality Improvement Charts
 Authors@R: c(person("Jacob", "Anhoej",
     email = "jacob@anhoej.net",
@@ -16,15 +16,16 @@ Description: Functions for making run charts and  basic Shewhart control
     sequential time periods.
     Missing values and empty subgroups are handled gracefully.
 Depends: R (>= 3.0.0)
-Imports: lattice, latticeExtra, graphics, grDevices, stats
+Imports: lattice, latticeExtra, graphics, grDevices, stats, ggplot2,
+        scales
 Suggests: knitr
 VignetteBuilder: knitr
 License: GPL-3
 LazyData: true
 NeedsCompilation: no
-Packaged: 2015-09-03 19:16:56 UTC; jacob
+Packaged: 2015-10-16 18:33:24 UTC; jacob
 Author: Jacob Anhoej [aut, cre],
   Timo Roeder [ctb]
 Maintainer: Jacob Anhoej <jacob@anhoej.net>
 Repository: CRAN
-Date/Publication: 2015-09-04 01:21:49
+Date/Publication: 2015-10-17 15:53:14
