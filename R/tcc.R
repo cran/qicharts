@@ -168,6 +168,7 @@ tcc <- function(n, d, x, g1, g2, breaks,
 
   # Initialise data frame
   df <- data.frame(n, d, x, g1, g2, cases)
+  df <- droplevels(df)
 
   # Build breaks variable
   if(missing(breaks)) {
@@ -201,10 +202,6 @@ tcc <- function(n, d, x, g1, g2, breaks,
                   FUN = sd,
                   na.rm = TRUE,
                   na.action = na.pass)
-  #   d3 <- aggregate(cbind(n.obs = n) ~ x + g1 + g2 + breaks,
-  #                   data = df,
-  #                   FUN = length,
-  #                   na.action = na.pass)
   d3 <- aggregate(cbind(n.obs = cases) ~ x + g1 + g2 + breaks,
                   data = df,
                   FUN = sum,
@@ -212,12 +209,14 @@ tcc <- function(n, d, x, g1, g2, breaks,
   df <- merge(d1, d2)
   df <- merge(df, d3)
   df <- df[order(df$x), ]
+
   # Calculate y variable
   if(sum.n & no.d | type %in% c('c', 't', 'g')) {
     df$y <- df$n
   } else {
     df$y <- df$n / df$d
   }
+  df$y[is.nan(df$y)] <- NA
 
   # Build exclude variable
   df$exclude <- FALSE
@@ -283,6 +282,7 @@ tcc.run <- function(df, freeze, ...) {
   lcl  <- NA
   ucl  <- NA
   df   <- cbind(df, cl, ucl, lcl)
+
   return(df)
 }
 
@@ -621,7 +621,9 @@ c4 <- function(n) {
   return(x)
 }
 
-#' Title
+#' Plot trellis control chart
+#'
+#' Creates a plot of a tcc object
 #'
 #' @param x List object returned from the tcc() function.
 #' @param y Ignored. Included for compatibility with generic plot function.

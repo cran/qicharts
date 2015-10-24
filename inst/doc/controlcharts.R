@@ -170,13 +170,13 @@ qic(n.pat.pu,
     ylab         = 'Standard deviations',
     xlab         = 'Week')
 
-## ----fig13, fig.cap='Figure 13: Primed P chart'--------------------------
-# Plot primed P chart
+## ----fig13, fig.cap='Figure 13: Prime P chart'---------------------------
+# Plot prime P chart
 qic(n.pat.pu, discharges, week, d,
     chart    = 'p',
     multiply = 100,
-    main     = 'Primed P chart of patients with pressure ulcer',
+    main     = 'Prime P chart of patients with pressure ulcer',
     ylab     = 'Percent',
     xlab     = 'Week',
-    primed   = TRUE)
+    prime    = TRUE)
 

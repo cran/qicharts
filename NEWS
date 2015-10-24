@@ -1,3 +1,8 @@
+qicharts 0.4.2
+=================
+* Removed empty levels from data frame in tcc().
+* Fixed a bug in qic() code that handles run charts with more than half of the data points having same value.
+
 qicharts 0.4.1
 =================
 * Fixed undefined globals
