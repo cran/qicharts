@@ -19,10 +19,21 @@ example(trc)
 example(tcc)
 example(paretochart)
 vignette('runcharts')
+vignette('controlcharts')
 ```
 Then read the help files
 ```
 ?qic
 ?trc
+?tcc
 ?paretochart
+```
+Install latest release version of qicharts from CRAN
+```
+install.packages('qicharts')
+```
+Or install development version from GitHub
+```
+require(devtools)
+install_github('anhoej/qicharts')
 ```

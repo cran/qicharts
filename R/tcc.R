@@ -2,12 +2,13 @@
 #'
 #' Run and control charts for multivariate data i trellis (grid) layout.
 #'
+#' @export
 #' @param n Numeric vector of counts or measures to plot. Mandatory.
 #' @param d Numeric vector of sample sizes. Mandatory for P and U charts.
 #' @param x Subgrouping vector used for aggregating data and making x-labels.
 #'   Mandatory for Xbar and S charts.
 #' @param g1 Grouping vector 1 used for trellis layout (facets).
-#' @param g2 Grouping vector 2used for trellis layout (facets).
+#' @param g2 Grouping vector 2 used for trellis layout (facets).
 #' @param breaks Numeric vector of break points. Useful for splitting graph in
 #'   two or more sections with separate center line and control limits.
 #' @param data Data frame containing variables.
@@ -25,22 +26,24 @@
 #' @param exclude Numeric vector of data points to exclude from calculations of
 #'   center and control lines.
 #' @param sum.n Logical value indicating whether the mean (default) or sum of
-#'   counts should be plotted. Only relevant for run charts and I charts.
+#'   counts or measures should be plotted. Only relevant for run charts and I
+#'   charts with multiple counts or measures per subgroup.
 #' @param neg.y Logical value. If TRUE (default), the y axis is allowed to be
 #'   negative (only relevant for I and Xbar charts).
 #' @param cex Number indicating the amount by which text should be magnified.
 #' @param pex Number indicating the amount by which plotting symbols should be
 #'   magnified.
+#' @param dec Number of decimals on center and control line labels.
 #' @param ylim Range of y axis.
-#' @param date.format Date format of x axis labels. See \code{?strftime} for
+#' @param date.format Date format of x axis labels. See \code{?strftime()} for
 #'   possible date formats.
-#' @param prime Logical value, If TRUE (default), control limits incorporate
-#'   between-subgroup variation as proposed by Laney (2002). Only relevant for P
-#'   and U charts.
+#' @param prime Logical value, If TRUE (default unless dots.only = TRUE),
+#'   control limits incorporate between-subgroup variation as proposed by Laney
+#'   (2002). Only relevant for P and U charts.
 #' @param flip Logical. If TRUE rotates the plot 90 degrees.
 #' @param dots.only Logical value. If TRUE, data points are not connected by
-#'   lines and runs analysis is not performed. Useful for comparison and funnel
-#'   plots.
+#'   lines, prime is forced to be FALSE and runs analysis is not performed.
+#'   Useful for comparison and funnel plots.
 #' @param main Character string specifying the title of the plot.
 #' @param xlab Character string specifying the x axis label.
 #' @param ylab Character string specifying the y axis label.
@@ -48,17 +51,15 @@
 #' @param print Logical. if TRUE, prints return value.
 #' @param ... Further arguments to ggplot function.
 #'
-#' @details \code{tcc()} is a wrapper function that uses \code{\link{ggplot2}}
-#'   to create multivariate run and control charts. It takes up to two grouping
-#'   variables to make one or two dimensional trellis plots.
+#' @details \code{tcc()} is a wrapper function that uses ggplot2 to create
+#'   multivariate run and control charts. It takes up to two grouping variables
+#'   to make one or two dimensional trellis plots.
 #'
 #' @return A list of of class tcc containing values and parameters of the tcc
 #'   plot.
 #'
-#' @export
-#'
 #' @examples
-#' # Run chart of 24 random vaiables
+#' # Run chart of 24 random normal variables
 #' tcc(rnorm(24))
 #'
 #' # Build data frame for examples
@@ -98,8 +99,8 @@
 
 tcc <- function(n, d, x, g1, g2, breaks,
                 data,
-                chart        = c("run", "i", "mr", "xbar", "s",
-                                 "t", "p", "c", "u", "g"),
+                chart      = c("run", "i", "mr", "xbar", "s",
+                               "t", "p", "c", "u", "g"),
                 multiply    = 1,
                 freeze      = NULL,
                 exclude,
@@ -107,13 +108,14 @@ tcc <- function(n, d, x, g1, g2, breaks,
                 neg.y       = TRUE,
                 cex         = 1,
                 pex         = 1,
+                dec         = 2,
                 ylim        = NULL,
                 date.format = NULL,
                 prime       = TRUE,
                 flip        = FALSE,
                 dots.only   = FALSE,
                 main,
-                xlab        = 'Time',
+                xlab        = 'Subgroup',
                 ylab        = 'Indicator',
                 plot        = TRUE,
                 print       = FALSE,
@@ -166,6 +168,11 @@ tcc <- function(n, d, x, g1, g2, breaks,
   d[!cases] <- NA
   cases <- complete.cases(n, d)
 
+  # Prevent prime if dots.only
+  if(dots.only) {
+    prime = FALSE
+  }
+
   # Initialise data frame
   df <- data.frame(n, d, x, g1, g2, cases)
   df <- droplevels(df)
@@ -174,7 +181,7 @@ tcc <- function(n, d, x, g1, g2, breaks,
   if(missing(breaks)) {
     df$breaks <- rep(1, nrow(df))
   } else {
-    freeze = NULL
+    freeze <- NULL
     df <- split(df, list(df$g1, df$g2))
     df <- lapply(df, function(x) {
       if(!all(breaks %in% 2:(nrow(x) - 2))) {
@@ -185,8 +192,10 @@ tcc <- function(n, d, x, g1, g2, breaks,
         breaks <- sort(breaks)
         breaks <- diff(breaks)
         breaks <- rep(1:length(breaks), breaks)
-        x$breaks <- breaks}
-      return(x)})
+        x$breaks <- breaks
+      }
+      return(x)
+    })
     df <- do.call(rbind, df)
     df <- df[order(df$g1, df$g2, df$breaks, df$x), ]
   }
@@ -216,13 +225,16 @@ tcc <- function(n, d, x, g1, g2, breaks,
   } else {
     df$y <- df$n / df$d
   }
-  df$y[is.nan(df$y)] <- NA
+
+  # df$y[is.nan(df$y)] <- NA
+  df$y[df$d == 0] <- NA
+
 
   # Build exclude variable
   df$exclude <- FALSE
   if(!missing(exclude)) {
     df <- split(df, list(df$g1, df$g2))
-    df <- lapply(df, function(x) {x$exclude[exclude] <- T; return(x)})
+    df <- lapply(df, function(x) {x$exclude[exclude] <- TRUE; return(x)})
     df <- do.call(rbind, df)
   }
 
@@ -239,6 +251,8 @@ tcc <- function(n, d, x, g1, g2, breaks,
   df$limits.signal    <- df$y < df$lcl | df$y > df$ucl
   x                   <- is.na(df$limits.signal)
   df$limits.signal[x] <- FALSE
+  df$ucl[!is.finite(df$ucl)] <- NA
+  df$lcl[!is.finite(df$lcl)] <- NA
 
   # Prevent negative y axis if negy argument is FALSE
   if(!neg.y & min(df$y, na.rm = TRUE) >= 0)
@@ -258,8 +272,9 @@ tcc <- function(n, d, x, g1, g2, breaks,
 
   # Plot and return
   if(plot) {
-    plot.tcc(tcc, cex = cex, pex = pex, ylim = ylim, date.format = date.format,
-             flip = flip, dots.only = dots.only, ...)
+    plot.tcc(tcc, cex = cex, pex = pex, dec = dec, ylim = ylim,
+             date.format = date.format, flip = flip, dots.only = dots.only,
+             ...)
   }
 
   if(print) {
@@ -273,7 +288,6 @@ tcc.run <- function(df, freeze, ...) {
   l <- nrow(df)
   if(is.null(freeze))
     freeze <- l
-
   base <- 1:freeze
   base <- base[!df$exclude]
   y    <- df$y
@@ -292,7 +306,6 @@ tcc.i <- function(df, freeze, ...) {
     freeze <- l
   base <- 1:freeze
   base <- base[!df$exclude]
-
   y    <- df$y
 
   # Calculate centre line
@@ -328,7 +341,6 @@ tcc.mr <- function(df, freeze, ...) {
     freeze <- l
   base <- 1:freeze
   base <- base[!df$exclude]
-
   y    <- df$y
   y    <- c(NA, abs(diff(y)))
   df$y <- y
@@ -379,14 +391,12 @@ tcc.xbar <- function(df, freeze, ...){
     freeze <- l
   base <- 1:freeze
   base <- base[!df$exclude]
-
-  y <- df$y
-  n <- df$n.obs
-  s <- df$s
+  y    <- df$y
+  n    <- df$n.obs
+  s    <- df$s
 
   # Calculate centre line, Montgomery 6.30
-  cl <- sum(n[base] * y[base], na.rm = TRUE) / sum(n[base],
-                                                   na.rm = TRUE)
+  cl <- sum(n[base] * y[base], na.rm = TRUE) / sum(n[base], na.rm = TRUE)
   cl <- rep(cl, l)
 
   # Calculate standard deviation and control limits, Montgomery 6.31
@@ -405,7 +415,6 @@ tcc.s <- function(df, freeze, ...){
   l <- nrow(df)
   if(is.null(freeze))
     freeze <- l
-
   base <- 1:freeze
   base <- base[!df$exclude]
   s    <- df$s
@@ -430,7 +439,6 @@ tcc.p <- function(df, freeze, prime, ...) {
   l <- nrow(df)
   if(is.null(freeze))
     freeze <- l
-
   base  <- 1:freeze
   base  <- base[!df$exclude]
   n     <- df$n
@@ -439,7 +447,6 @@ tcc.p <- function(df, freeze, prime, ...) {
   cl    <- sum(n[base], na.rm = TRUE) / sum(d[base], na.rm = TRUE)
   cl    <- rep(cl, l)
   stdev <- sqrt(cl * (1 - cl) / d)
-
   # Calculate standard deviation for Laney's p-prime chart, incorporating
   # between-subgroup variation.
   if(prime) {
@@ -464,7 +471,6 @@ tcc.c <- function(df, freeze, ...){
     freeze <- l
   base <- 1:freeze
   base <- base[!df$exclude]
-
   y  <- df$y
   cl <- mean(y[base], na.rm = TRUE)
   cl <- rep(cl, l)
@@ -486,7 +492,6 @@ tcc.u <- function(df, freeze, prime, ...){
   l        <- nrow(df)
   if(is.null(freeze))
     freeze <- l
-
   base <- 1:freeze
   base <- base[!df$exclude]
   n    <- df$n
@@ -498,7 +503,7 @@ tcc.u <- function(df, freeze, prime, ...){
   # Calculate standard deviation, Montgomery 7.19
   stdev <- sqrt(cl / d)
 
-  # Calculate standard deviation for Laney's p-prime chart, incorporating
+  # Calculate standard deviation for Laney's u-prime chart, incorporating
   # between-subgroup variation.
   if(prime) {
     z_i     <- (y[base] - cl[base]) / stdev[base]
@@ -517,10 +522,9 @@ tcc.u <- function(df, freeze, prime, ...){
 }
 
 tcc.g <- function(df, freeze, ...){
-  l        <- nrow(df)
+  l <- nrow(df)
   if(is.null(freeze))
     freeze <- l
-
   base <- 1:freeze
   base <- base[!df$exclude]
   y    <- df$y
@@ -559,8 +563,9 @@ runs.analysis <- function(df) {
   n.crossings.min <- qbinom(0.05, max(n.useful - 1, 0), 0.5)  # Chen 2010 (7)
   runs.signal     <- longest.run > longest.run.max ||
     n.crossings < n.crossings.min
-  runs.signal     <- rep(runs.signal, length(y))
-  df              <- cbind(df, runs.signal)
+#   runs.signal     <- rep(runs.signal, length(y))
+#   df              <- cbind(df, runs.signal)
+  df$runs.signal  <- runs.signal
 
   return(df)
 }
@@ -594,6 +599,7 @@ b3 <- function(n) {
 }
 
 b4 <- function(n) {
+  n[n == 0]    <- NA
   tbl          <- c(NA,
                     3.267, 2.568, 2.266, 2.089, 1.970, 1.882,
                     1.815, 1.761, 1.716, 1.679, 1.646, 1.618,
@@ -625,11 +631,15 @@ c4 <- function(n) {
 #'
 #' Creates a plot of a tcc object
 #'
+#' @export
+#' @import ggplot2
+#' @importFrom scales date_format
 #' @param x List object returned from the tcc() function.
 #' @param y Ignored. Included for compatibility with generic plot function.
 #' @param cex Number indicating the amount by which text should be magnified.
 #' @param pex Number indicating the amount by which plotting symbols should be
 #'   magnified.
+#' @param dec Number of decimals on center and control line labels.
 #' @param ylim Range of y axis.
 #' @param date.format Date format of x axis labels. See \code{?strftime} for
 #'   date formats.
@@ -641,27 +651,19 @@ c4 <- function(n) {
 #'
 #' @return Creates a tcc plot.
 #'
-#' @export
-#'
-#' @import ggplot2
-#' @import scales
-#'
 #' @examples
 #' p <- tcc(rnorm(24))
 #' plot(p)
-#'
 plot.tcc <- function(x,
                      y           = NULL,
                      cex         = 1,
                      pex         = 1,
                      ylim        = NULL,
+                     dec         = 2,
                      date.format = '%Y-%m-%d',
                      flip        = FALSE,
                      dots.only   = FALSE,
                      ...) {
-  #   require(scales)
-  #   require(ggplot2)
-
   df      <- x$df
   main    <- x$main
   ylab    <- x$ylab
@@ -711,13 +713,18 @@ plot.tcc <- function(x,
                        na.rm = TRUE)
   }
 
-  p <- p + geom_point(aes_string(x = 'x', y = 'y', group = 'breaks', fill = 'pcol'),
+  p <- p + geom_point(aes_string(x = 'x', y = 'y',
+                                 group = 'breaks',
+                                 fill = 'pcol'),
                       colour = col1,
                       size = 2.5 * pex * cex,
                       shape = 21,
                       na.rm = TRUE) +
+    # Colour centre line according to runs analysis
     scale_colour_manual(values = cols) +
+    # Colour data points according to limits analysis
     scale_fill_manual(values = cols) +
+    # Suppress legend
     guides(colour = FALSE, fill = FALSE)
 
   ng1 <- nlevels(droplevels(as.factor(df$g1))) > 1
@@ -730,16 +737,52 @@ plot.tcc <- function(x,
   } else if(ng2) {
     p <- p + facet_wrap(~ g2, ...)
   } else {
-    p <- p + theme(panel.border = element_blank(),
-                   axis.line = element_line(size = 0.1, colour = col3))
+    p <- p +
+      theme(panel.border = element_blank(),
+            axis.line = element_line(size = 0.1, colour = col3))
+    # Add centre line label
+    if(length(na.omit(df$cl))) {
+      p <- p +
+        geom_text(aes_string(x = 'tail(x, 1)', y = 'tail(na.omit(cl), 1)',
+                             label = 'sround(tail(cl, 1), dec)'),
+#         geom_text(aes_string(x = 'tail(x, 1)', y = 'mean(cl, na.rm = TRUE)',
+#                              label = 'sround(mean(cl, na.rm = TRUE), dec)'),
+                  hjust = -0.15,
+                  col = 'grey30',
+                  size = 3)
+    }
+    # Add upper control limit label
+    if(length(na.omit(df$ucl))) {
+      p <- p +
+        geom_text(aes_string(x = 'tail(x, 1)', y = 'tail(na.omit(ucl), 1)',
+                             label = 'sround(tail(na.omit(ucl), 1), dec)'),
+#         geom_text(aes_string(x = 'tail(x, 1)', y = 'mean(ucl, na.rm = TRUE)',
+#                              label = 'sround(mean(ucl, na.rm = T), dec)'),
+                  hjust = -0.15,
+                  col = 'grey30',
+                  size = 3)
+    }
+    # Add lower control limit label
+    if(length(na.omit(df$lcl))) {
+      p <- p +
+        geom_text(aes_string(x = 'tail(x, 1)', y = 'tail(na.omit(lcl), 1)',
+                             label = 'sround(tail(na.omit(lcl), 1), dec)'),
+#         geom_text(aes_string(x = 'tail(x, 1)', y = 'mean(lcl, na.rm = TRUE)',
+#                              label = 'sround(mean(lcl, na.rm = TRUE), dec)'),
+                  hjust = -0.15,
+                  col = 'grey30',
+                  size = 3)
+    }
   }
 
+  # Add vertical line to mark freeze point
   if(!is.null(freeze)) {
     f <- as.numeric(df$x[freeze])
     f <- f + as.numeric(df$x[freeze + 1] - df$x[freeze]) / 2
     p <- p + geom_vline(xintercept = f, size = 0.5, lty = 3, colour = col3)
   }
 
+  # Format data axis
   if(inherits(df$x, c('Date')) & !is.null(date.format)) {
     p <- p + scale_x_date(labels = date_format(date.format))
   }
@@ -748,20 +791,16 @@ plot.tcc <- function(x,
     p <- p + scale_x_datetime(labels = date_format(date.format))
   }
 
+  # Add title and axis labels
   p <- p +
     labs(title = main, x = xlab, y = ylab) +
     coord_cartesian(ylim = ylim)
 
+  # Flip chart
   if(flip) {
     p <- p + coord_flip()
-
   }
 
-  #   p <- p +
-  #     geom_text(aes(x = max(x), y = cl, label = round(cl, 2)),
-  #               # hjust = 1,
-  #               vjust = 0,
-  #               size = 3)
-
+  # Plot chart
   plot(p)
 }
