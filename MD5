@@ -1,12 +1,12 @@
-72d1cb19c7de4a2ea83dcda165e3f79f *DESCRIPTION
+07d8032b442c1c22cd298665b210a87c *DESCRIPTION
 59ffe08f01cea85392fefcfcca76660a *NAMESPACE
-845f40e0f711782f63b4afe9ebf824bf *NEWS
+b0f3f924eeac00fac268b312afd27211 *NEWS
 13960198e42aa466e96d78ce23acc38d *R/paretochart.R
 111371a3a06f77662e16f2cc04a33efe *R/qic.R
-97d0a0907325d83bea31c25bb562120c *R/tcc.R
+7ee5a938200efeccdd7383b5aa73f260 *R/tcc.R
 c47c7a851529c1e330e9087bca8f96ae *R/trc.R
 50a3c79ea11f22b9a3a2fb8536116081 *README.md
-a2edbc10f5cab3f1ecd23412c2c2ace1 *build/vignette.rds
+de0c6debe233b85a91114b6c0e36f8ca *build/vignette.rds
 fd8ad5cb710d8404650e80658c6dbbb0 *inst/doc/controlcharts.R
 b61f89d9b015f4f6804d24c2e513c670 *inst/doc/controlcharts.Rmd
 200afd8871f7add4619a47fd8260d9d0 *inst/doc/controlcharts.html
@@ -17,7 +17,7 @@ bd2f50bee879a26a3f10d3420650f335 *man/paretochart.Rd
 f14951305f8ab69de5dc23b4f622f5cc *man/plot.qic.Rd
 f07891380ec6039019b77d0cc6e47d33 *man/qic.Rd
 f1796435cade05cfd8e017a7fdbe9e20 *man/summary.tcc.Rd
-a0adf91e5d1d7fbac83af0854d22d8ab *man/tcc.Rd
+522f1aee1982b0d4ee4e551009b71ad9 *man/tcc.Rd
 4e1b37fcf0b58ed2f6fca72a84a09d12 *man/trc.Rd
 b61f89d9b015f4f6804d24c2e513c670 *vignettes/controlcharts.Rmd
 cf8503bd9a8cc530efa0ea8b5f12d2da *vignettes/runcharts.Rmd
