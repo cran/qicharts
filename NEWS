@@ -1,3 +1,14 @@
+qicharts 0.5.3
+=================
+* Fixed vignette file dates
+
+qicharts 0.5.2
+=================
+* Fixed bug in tcc() that in some situations would read any object named d4 from the parent environment.
+* Added space to top margin in paretochart().
+* Fixed resetting of graphical parameters after plotting in qic() and paretochart().
+* Build with R 3.3.2.
+
 qicharts 0.5.1
 =================
 * Included details of runs analysis in summary.tcc().

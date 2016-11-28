@@ -396,6 +396,7 @@ qic <- function(y,
                           exclude      = ex,
                           prime        = prime,
                           standardised = standardised))
+
     qic$y   <- c(qic$y, y$y)
     qic$cl  <- c(qic$cl, y$cl)
     qic$lcl <- c(qic$lcl, y$lcl)
@@ -1055,6 +1056,7 @@ plot.qic <- function(x, y = NULL, ...) {
     mar <- mar + c(1, 0, 0, 0)
 
   op <- par(mar = mar, cex = cex, lwd = lwd)
+  on.exit(par(op))
 
   # setup empty plot area
   plot(x    = x,
