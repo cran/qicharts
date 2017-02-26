@@ -4,7 +4,6 @@
 #'
 #' @export
 #' @import ggplot2
-#' @import ggrepel
 #' @importFrom utils tail
 #'
 #' @param n Numerator, numeric vector of counts or measures to plot. Mandatory.
@@ -51,6 +50,8 @@
 #' @param main Character string specifying the title of the plot.
 #' @param xlab Character string specifying the x axis label.
 #' @param ylab Character string specifying the y axis label.
+#' @param caption Character string specifying the caption.
+#' @param subtitle Character string specifying the subtitle.
 #' @param cex Number indicating the amount by which text should be magnified.
 #' @param pex Number indicating the amount by which plotting symbols should be
 #'   magnified.
@@ -136,10 +137,12 @@ tcc <- function(n, d, x, g1, g2, breaks, notes,
                 x.pad         = 1,
                 x.date.format = NULL,
                 cl.lab        = TRUE,
-                cl.decimals   = 2,
+                cl.decimals   = NULL,
                 main,
                 xlab          = 'Subgroup',
                 ylab          = 'Value',
+                subtitle      = NULL,
+                caption       = NULL,
                 cex           = 1,
                 pex           = 1,
                 prime         = TRUE,
@@ -252,11 +255,12 @@ tcc <- function(n, d, x, g1, g2, breaks, notes,
                       FUN = paste,
                       collapse=' | '),
       silent = TRUE)
+
   df <- merge(d1, d2)
   df <- merge(df, d3)
 
   if(exists('d4', inherits = FALSE)) {
-    df <- merge(df, d4, all = T)
+    df <- merge(df, d4, all = TRUE)
   } else{
     df$notes <- NA
   }
@@ -296,14 +300,17 @@ tcc <- function(n, d, x, g1, g2, breaks, notes,
   num.cols                   <- c('n', 'd', 's', 'n.obs',
                                   'cl', 'lcl', 'ucl', 'y')
   mult.cols                  <- c('cl', 'lcl', 'ucl', 'y')
-  df[num.cols]               <- sapply(df[num.cols], as.numeric)
-  df[mult.cols]              <- sapply(df[mult.cols], function(x) x * multiply)
+
+  df[num.cols]               <- lapply(df[num.cols], as.numeric)
+  df[mult.cols]              <- lapply(df[mult.cols], function(x) x * multiply)
   df$limits.signal           <- df$y < df$lcl | df$y > df$ucl
   x                          <- is.na(df$limits.signal)
   df$limits.signal[x]        <- FALSE
   df$ucl[!is.finite(df$ucl)] <- NA
   df$lcl[!is.finite(df$lcl)] <- NA
   df$target                 <- as.numeric(target)
+
+
 
   # Prevent negative y axis if negy argument is FALSE
   if(!y.neg & min(df$y, na.rm = TRUE) >= 0)
@@ -314,6 +321,8 @@ tcc <- function(n, d, x, g1, g2, breaks, notes,
               main     = main,
               xlab     = xlab,
               ylab     = ylab,
+              subtitle = subtitle,
+              caption  = caption,
               n.sum    = n.sum,
               multiply = multiply,
               freeze   = freeze,
@@ -333,12 +342,6 @@ tcc <- function(n, d, x, g1, g2, breaks, notes,
     print(summary(p))
 
   return(p)
-
-  # if(print) {
-  #   return(tcc)
-  # } else {
-  #   invisible(tcc)
-  # }
 }
 
 tcc.run <- function(df, freeze, ...) {
@@ -480,7 +483,7 @@ tcc.s <- function(df, freeze, ...){
 
   # Calculate centre line, Montgomery 6.31
   sbar <- sqrt(sum(s[base]^2 * (n[base] - 1), na.rm = TRUE) /
-                 (sum(n[base], na.rm = TRUE) - l))
+                 (sum(n[base], na.rm = TRUE) - freeze))
   cl   <- rep(sbar, l)
   B3   <- b3(n)
   B4   <- b4(n)
@@ -721,6 +724,9 @@ plot.tcc <- function(x,
   main    <- x$main
   ylab    <- x$ylab
   xlab    <- x$xlab
+  subtitle <- x$subtitle
+  caption <- x$caption
+
   freeze  <- x$freeze
   col1    <- rgb(093, 165, 218, maxColorValue = 255) # blue
   # col2    <- rgb(255, 165, 000, maxColorValue = 255) # amber
@@ -735,21 +741,27 @@ plot.tcc <- function(x,
   df$pcol <- ifelse(df$limits.signal, 'col2', 'col1')
   df$pcol <- ifelse(df$exclude, 'col4', df$pcol)
   df$lcol <- ifelse(df$runs.signal, 'col2', 'col3')
+
   p <- ggplot(df) +
     theme_bw(base_size = 11 * cex) +
     theme(panel.border     = element_rect(colour = 'grey70', size = 0.1),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
-          # axis.line        = element_blank(),
+          legend.position  = 'none',
           axis.ticks       = element_line(colour = col3),
           axis.title.y     = element_text(margin = margin(r = 8)),
           axis.title.x     = element_text(margin = margin(t = 8)),
           plot.title       = element_text(hjust = 0, margin = margin(b = 8)),
           strip.background = element_rect(fill = 'grey90', colour = 'grey70'))
+
+  # Add lines
   p <- p +
-    geom_line(aes_string(x = 'x', y = 'cl', colour = 'lcol', group = 'breaks'),
+    geom_line(aes_string(x = 'x', y = 'cl', linetype = 'runs.signal',
+                         colour = 'runs.signal', group = 'breaks'),
               lwd = 0.6 * cex,
               na.rm = TRUE) +
+    scale_linetype_manual(values = c('FALSE' = 'solid', 'TRUE' = 'dashed')) +
+    scale_colour_manual(values = c('TRUE' = col2, 'FALSE' = col3)) +
     geom_line(aes_string(x = 'x', y = 'lcl', group = 'breaks'),
               colour = col3,
               lwd = 0.3 * cex,
@@ -758,7 +770,7 @@ plot.tcc <- function(x,
               colour = col3,
               lwd = 0.3 * cex,
               na.rm = TRUE) +
-    geom_line(aes_string(x = 'x', y = 'target'),
+    geom_line(aes_string(x = 'x', y = 'target', group = '1'),
               colour = col5,
               lty = 5,
               lwd = 0.3 * cex,
@@ -771,6 +783,7 @@ plot.tcc <- function(x,
                        na.rm = TRUE)
   }
 
+  # Add data points
   p <- p + geom_point(aes_string(x = 'x', y = 'y',
                                  group = 'breaks',
                                  fill = 'pcol'),
@@ -779,12 +792,7 @@ plot.tcc <- function(x,
                       size = 2 * pex * cex,
                       shape = 21,
                       na.rm = TRUE) +
-    # Colour centre line according to runs analysis
-    scale_colour_manual(values = cols) +
-    # Colour data points according to limits analysis
-    scale_fill_manual(values = cols) +
-    # Suppress legend
-    guides(colour = FALSE, fill = FALSE)
+    scale_fill_manual(values = cols) #+
 
   ng1 <- nlevels(droplevels(as.factor(df$g1))) > 1
   ng2 <- nlevels(droplevels(as.factor(df$g2))) > 1
@@ -809,7 +817,7 @@ plot.tcc <- function(x,
     p <- p + geom_vline(xintercept = f, size = 0.5, lty = 3, colour = col3)
   }
 
-  # Format data axis
+  # Format date axis
   if(!is.null(x.date.format)) {
     if(inherits(df$x, 'Date')) {
       p <- p + scale_x_date(date_labels = x.date.format)
@@ -819,21 +827,22 @@ plot.tcc <- function(x,
     }
   }
 
-
   # Add title and axis labels
   p <- p +
-    labs(title = main, x = xlab, y = ylab) +
+    labs(title = main, x = xlab, y = ylab, caption = caption, subtitle = subtitle) +
     expand_limits(y = y.expand)
-  # coord_cartesian(ylim = ylim)
 
   # Add center line label
   if(cl.lab) {
     m <- ifelse(y.percent, 100, 1)
-    p <- p + geom_text(aes_string(x = 'tail(x, 1)', y = 'cl',
+    lab.x <- ifelse(is.factor(df$x), 'tail(x, 1)', 'max(x)')
+    lab.just <- ifelse(flip, '0.5', '0')
+    lab.nudge <- ifelse(flip, 0.2, 0)
+
+    p <- p + geom_text(aes_string(x = lab.x, y = 'cl',
                                   label = 'paste0("  ", sround(cl * m, cl.decimals))',
-                                  hjust = 0),
-                       # hjust = -0.25,
-                       # nudge_x = 1,
+                                  hjust = lab.just),
+                       nudge_x = lab.nudge,
                        check_overlap = TRUE,
                        col = 'grey30',
                        size = 3 * cex)
@@ -845,11 +854,18 @@ plot.tcc <- function(x,
   # Add annotations
   if(sum(!is.na(df$notes))) {
     p <- p +
-      geom_text_repel(aes_string(x = 'x', y = 'y', label = 'notes'),
-                      size = 3 * cex,
-                      # point.padding = unit(2, 'points'),
-                      box.padding = unit(0.5, 'lines'),
-                      na.rm = TRUE)
+      geom_label(aes_string(x = 'x', y = 'y', label = 'notes'),
+                na.rm = TRUE,
+                vjust = 0,
+                label.size = 0,
+                alpha = 0.6,
+                size = 3 * cex)
+
+      # geom_text_repel(aes_string(x = 'x', y = 'y', label = 'notes'),
+      #                 size = 3 * cex,
+      #                 # point.padding = unit(2, 'points'),
+      #                 box.padding = unit(0.5, 'lines'),
+      #                 na.rm = TRUE)
   }
 
   # Flip chart
@@ -857,12 +873,11 @@ plot.tcc <- function(x,
     p <- p + coord_flip()
   }
 
+  # Format percent axis
   if(y.percent) {
     p <- p + scale_y_continuous(labels = scales::percent)
   }
 
-  # Plot chart
-  # plot(p)
   return(p)
 }
 
