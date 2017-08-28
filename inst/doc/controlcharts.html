@@ -4,7 +4,7 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
@@ -12,7 +12,7 @@
 
 <meta name="author" content="Jacob Anhoej" />
 
-<meta name="date" content="2017-02-26" />
+<meta name="date" content="2017-08-28" />
 
 <title>Control Charts with qicharts for R</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Control Charts with qicharts for R</h1>
 <h4 class="author"><em>Jacob Anhoej</em></h4>
-<h4 class="date"><em>2017-02-26</em></h4>
+<h4 class="date"><em>2017-08-28</em></h4>
 
 
 <div id="TOC">
@@ -100,9 +100,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>I assume that you are already familiar with basic control chart theory. If not, I suggest that you buy a good, old fashioned book on the subject. I highly recommend Montgomery’s Introduction to Statistical Process Control (Montgomery 2009). Also, The Healthcare Data Guide (Provost 2011) is very useful and contains a wealth of information on the specific use of control charts in healthcare settings. In particular, the sections on rare events T and G control charts and the detailed explanation of prime charts are most helpful. However, I suggest that you avoid the chapter on run charts in this book, since it promotes the use of certain run chart rules that have been proven ineffective and even misleading (Anhoej 2015).</p>
 <p>Before we start, we will load the qicharts package and lock the random number generator in order to make reproducible data sets for this vignette.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Load the qicharts package</span>
-<span class="kw">library</span>(qicharts)
-
-<span class="co"># Lock random number generator to reproduce the charts from this vignette</span>
+<span class="kw">library</span>(qicharts)</code></pre></div>
+<pre><code>## qicharts will no longer be maintained. Please consider moving to qicharts2: https://anhoej.github.io/qicharts2/.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Lock random number generator to reproduce the charts from this vignette</span>
 <span class="kw">set.seed</span>(<span class="dv">7</span>)</code></pre></div>
 </div>
 <div id="control-chart-basics" class="section level2">
@@ -158,14 +158,14 @@ y[<span class="dv">18</span>] &lt;-<span class="st"> </span><span class="dv">5</
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Setup parameters</span>
 m.beds       &lt;-<span class="st"> </span><span class="dv">300</span>
 m.stay       &lt;-<span class="st"> </span><span class="dv">4</span>
-m.days       &lt;-<span class="st"> </span>m.beds *<span class="st"> </span><span class="dv">7</span>
-m.discharges &lt;-<span class="st"> </span>m.days /<span class="st"> </span>m.stay
+m.days       &lt;-<span class="st"> </span>m.beds <span class="op">*</span><span class="st"> </span><span class="dv">7</span>
+m.discharges &lt;-<span class="st"> </span>m.days <span class="op">/</span><span class="st"> </span>m.stay
 p.pu         &lt;-<span class="st"> </span><span class="fl">0.08</span>
 
 <span class="co"># Simulate data</span>
 discharges  &lt;-<span class="st"> </span><span class="kw">rpois</span>(<span class="dv">24</span>, <span class="dt">lambda =</span> m.discharges)
 patientdays &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="kw">rnorm</span>(<span class="dv">24</span>, <span class="dt">mean =</span> m.days, <span class="dt">sd =</span> <span class="dv">100</span>))
-n.pu        &lt;-<span class="st"> </span><span class="kw">rpois</span>(<span class="dv">24</span>, <span class="dt">lambda =</span> m.discharges *<span class="st"> </span>p.pu *<span class="st"> </span><span class="fl">1.5</span>)
+n.pu        &lt;-<span class="st"> </span><span class="kw">rpois</span>(<span class="dv">24</span>, <span class="dt">lambda =</span> m.discharges <span class="op">*</span><span class="st"> </span>p.pu <span class="op">*</span><span class="st"> </span><span class="fl">1.5</span>)
 n.pat.pu    &lt;-<span class="st"> </span><span class="kw">rbinom</span>(<span class="dv">24</span>, <span class="dt">size =</span> discharges, <span class="dt">prob =</span> p.pu)
 week        &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="kw">as.Date</span>(<span class="st">'2014-1-1'</span>),
                     <span class="dt">length.out =</span> <span class="dv">24</span>, 
@@ -480,7 +480,7 @@ d &lt;-<span class="st"> </span><span class="kw">data.frame</span>(n.pat.pu, dis
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>

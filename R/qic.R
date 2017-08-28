@@ -1251,5 +1251,11 @@ sround <- function(x, dec) {
     n <- nchar(as.character(floor(x)))
     return(signif(x, max(2, n)))
   }
-  return(round(x, dec))
+  return(format(round(x, dec),
+                nsmall = dec, scientific = FALSE))
+}
+
+# Package startup message
+.onAttach <- function(libname, pkgname) {
+  packageStartupMessage('qicharts will no longer be maintained. Please consider moving to qicharts2: https://anhoej.github.io/qicharts2/.')
 }
