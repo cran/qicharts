@@ -1,25 +1,25 @@
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Load the qicharts package
 library(qicharts)
 
 # Lock random number generator to reproduce the charts from this vignette
 set.seed(7)
 
-## ----fig1, fig.cap='Figure 1: I chart showing common cause variation'----
+## ----fig1, fig.cap='Figure 1: I chart showing common cause variation'---------
 # Create vector of random values to plot
 y <- rnorm(24)
 
 # Plot I chart
 qic(y, chart = 'i')
 
-## ----fig2, fig.cap='Figure 2: I chart, special cause variation'----------
+## ----fig2, fig.cap='Figure 2: I chart, special cause variation'---------------
 # Introduce an outlier at data point number 18
 y[18] <- 5
 
 # Plot I chart
 qic(y, chart = 'i')
 
-## ----pudata--------------------------------------------------------------
+## ----pudata-------------------------------------------------------------------
 # Setup parameters
 m.beds       <- 300
 m.stay       <- 4
@@ -40,7 +40,7 @@ week        <- seq(as.Date('2014-1-1'),
 d <- data.frame(week, discharges, patientdays,n.pu, n.pat.pu)
 d
 
-## ----fig3, fig.cap='Figure 3: C chart displaying the number of defects'----
+## ----fig3, fig.cap='Figure 3: C chart displaying the number of defects'-------
 qic(n.pu,
     x     = week,
     data  = d,
@@ -49,7 +49,7 @@ qic(n.pu,
     ylab  = 'Count',
     xlab  = 'Week')
 
-## ----fig4, fig.cap='Figure 4: U chart displaying the rate of defects'----
+## ----fig4, fig.cap='Figure 4: U chart displaying the rate of defects'---------
 qic(n.pu, 
     n        = patientdays,
     x        = week,
@@ -83,7 +83,7 @@ qic(d,
     ylab  = 'Count',
     xlab  = 'Discharge no.')
 
-## ----fig7, fig.cap='Figure 7: I chart for individual measurements'-------
+## ----fig7, fig.cap='Figure 7: I chart for individual measurements'------------
 # Vector of birth weights from 24 babies
 y <- round(rnorm(24, mean = 3400, sd = 400))
 y
@@ -95,7 +95,7 @@ qic(y,
     ylab  = 'Grams',
     xlab  = 'Baby no.')
 
-## ----fig8, fig.cap='Figure 8: Moving range chart'------------------------
+## ----fig8, fig.cap='Figure 8: Moving range chart'-----------------------------
 # Plot moving ranges
 qic(y,
     chart = 'mr',
@@ -104,7 +104,7 @@ qic(y,
     xlab  = 'Baby no.')
 
 
-## ----fig9, fig.cap='Figure 9: Xbar chart of average measurements'--------
+## ----fig9, fig.cap='Figure 9: Xbar chart of average measurements'-------------
 # Vector of 24 subgroup sizes (average = 12)
 sizes <- rpois(24, 12)
 
@@ -138,7 +138,7 @@ qic(y,
     ylab = 'Grams',
     xlab = 'Date')
 
-## ----fig11, fig.cap='Figure 11: T chart displaying time between events'----
+## ----fig11, fig.cap='Figure 11: T chart displaying time between events'-------
 # Pick 24 random dates and sort them
 dates  <- seq(as.Date('2015-1-1'), as.Date('2015-12-31'), by = 'day')
 events <- sort(sample(dates, 24))
@@ -155,7 +155,7 @@ qic(d,
     ylab  = 'Days',
     xlab  = 'Pressure ulcer no.')
 
-## ----fig12, fig.cap='Figure 12: Standardised P chart'--------------------
+## ----fig12, fig.cap='Figure 12: Standardised P chart'-------------------------
 # Rebuild data frame from figure 5
 d <- data.frame(n.pat.pu, discharges, week)
 
@@ -170,7 +170,7 @@ qic(n.pat.pu,
     ylab         = 'Standard deviations',
     xlab         = 'Week')
 
-## ----fig13, fig.cap='Figure 13: Prime P chart'---------------------------
+## ----fig13, fig.cap='Figure 13: Prime P chart'--------------------------------
 # Plot prime P chart
 qic(n.pat.pu, discharges, week, d,
     chart    = 'p',
