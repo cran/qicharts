@@ -23,12 +23,12 @@
 #' @param xpad Number specifying the fraction by which to extend the x-axis in
 #'   order to make space for the median label.
 #' @param ... Further arguments to xyplot.
-#' @details This function is a wrapper for \code{\link{xyplot}} from the
-#' \code{\link{lattice}} package. Some usefull arguments from
-#' \code{\link{xyplot}} are \code{main}, \code{ylab}, \code{xlab}, and
+#' @details This function is a wrapper for \code{\link[lattice]{xyplot}} from the
+#' \code{lattice} package. Some usefull arguments from
+#' \code{\link[lattice]{xyplot}} are \code{main}, \code{ylab}, \code{xlab}, and
 #' \code{layout}.
 #' @return Returns an object of class "trellis".
-#' @seealso \code{\link{xyplot}}, \code{\link{qic}}
+#' @seealso \code{\link[lattice]{xyplot}}, \code{\link{qic}}
 #' @examples
 #' # Trellis run chart on 1 conditioning variable
 #' d1 <- data.frame(y = rnorm(96, 12, 3),

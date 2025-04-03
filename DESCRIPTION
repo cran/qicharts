@@ -1,5 +1,5 @@
 Package: qicharts
-Version: 0.5.8
+Version: 0.5.10
 Title: Quality Improvement Charts
 Authors@R: c(person("Jacob", "Anhoej",
     email = "jacob@anhoej.net",
@@ -23,11 +23,11 @@ Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 License: GPL-3
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2021-04-20 03:45:20 UTC; jacob
+Packaged: 2025-04-03 20:14:51 UTC; jacob
 Author: Jacob Anhoej [aut, cre],
   Timo Roeder [ctb]
 Maintainer: Jacob Anhoej <jacob@anhoej.net>
 Repository: CRAN
-Date/Publication: 2021-04-20 12:20:03 UTC
+Date/Publication: 2025-04-03 20:40:02 UTC
